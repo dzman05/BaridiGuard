@@ -43,30 +43,28 @@ jobs:
       - name: Copy & Rename APK
         run: |
           mkdir -p release-output
-          cp android-app/app/build/outputs/apk/debug/app-debug.apk release-output/BaridiGuard-v1.0.apk
+          cp android-app/app/build/outputs/apk/debug/app-debug.apk release-output/BaridiGuard-v1.1.apk
 
       - name: Upload APK as Workflow Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: BaridiGuard-v1.0-APK
-          path: release-output/BaridiGuard-v1.0.apk
+          name: BaridiGuard-v1.1-APK
+          path: release-output/BaridiGuard-v1.1.apk
           retention-days: 30
 
       - name: Create GitHub Release with APK
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.0
-          name: "BaridiGuard v1.0.0 (Official APK)"
+          tag_name: v1.1.0
+          name: "BaridiGuard v1.1.0 (Official Update)"
           body: |
-            ## 🛡️ BaridiGuard v1.0.0 - حارس بريدي (APK)
+            ## 🛡️ BaridiGuard v1.1.0 - حارس بريدي (Mise à jour)
             
-            تطبيق الحماية الاستباقية لتطبيق **BaridiMob** والبطاقة الذهبية في الجزائر.
-            
-            ### كيفية التثبيت على الهاتف:
-            1. اضغط على الرابط بالأسفل لتحميل **`BaridiGuard-v1.0.apk`**.
-            2. افتح الملف واضغط على **تثبيت (Installer)**.
-            3. امنح إذن مسؤول الجهاز لحماية التطبيق من الإيقاف بواسطة التروجانات.
-          files: release-output/BaridiGuard-v1.0.apk
+            ### ✨ الجديد في هذا التحديث (Nouveautés):
+            - 🌐 **زر تبديل اللغة المباشر [ 🇩🇿 AR / 🇫🇷 FR ]**: داخل التطبيق مع ترجمة فرنسية وعربية كاملة وتغيير اتجاه الشاشة (RTL/LTR).
+            - ⚡ **إصلاح قاطع الإنترنت على هواتف أندرويد الحديثة (Android 10 - 15)**: إطلاق نافذة قطع الشبكة الفورية وعزل التروجان مع صوت الإنذار.
+            - 🎨 **الأيقونة الرسمية عالية الدقة**: مطابقة تماماً لشعار الدرك السيبراني والبطاقة الذهبية داخل وخارج التطبيق.
+          files: release-output/BaridiGuard-v1.1.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

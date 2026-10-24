@@ -1,22 +1,23 @@
 package dz.baridiguard.security
 
 import android.content.Context
+import android.content.Intent
 import android.net.ConnectivityManager
-import android.net.Network
 import android.net.NetworkCapabilities
-import android.net.NetworkRequest
 import android.net.wifi.WifiManager
 import android.os.Build
+import android.provider.Settings
 import android.widget.Toast
 
 /**
  * NetworkKillSwitch
  * 
  * قاطع الاتصال التلقائي عند الخطر (Emergency Network Kill-Switch).
- * بمجرد اكتشاف محاولة تشغيل "الشاشة السوداء" أو فتح بريدي موب خفية:
- * 1. يقوم بعزل الهاتف فوراً عن شبكة الإنترنت (قطع الواي فاي وبيانات الهاتف).
- * 2. يقطع اتصال السوكيت (Socket Connection) المباشر بين التروجان وخادم المخترق (C2 Server).
- * 3. يفشل المخترق في تلقي كود الـ OTP أو إرسال أمر تأكيد التحويل المالي.
+ * في أنظمة أندرويد الحديثة (Android 10 إلى 15)، تمنع جوجل التطبيقات من تعطيل الواي فاي برمجياً بدون روت.
+ * لذلك نقوم بـ:
+ * 1. محاولة التعطيل المباشر (للأجهزة الأقدم).
+ * 2. فتح لوحة الاتصال السريع الرسمية (ACTION_INTERNET_CONNECTIVITY) في أجزاء من الثانية ليقطع المستخدم الإنترنت بضغطة زر.
+ * 3. فتح إعدادات وضع الطيران (Airplane Mode) كخيار عزل فوري شامل.
  */
 class NetworkKillSwitch(private val context: Context) {
 
@@ -28,39 +29,61 @@ class NetworkKillSwitch(private val context: Context) {
     /**
      * تنفيذ القطع الطارئ للشبكة وعزل الهاتف
      */
-    fun triggerEmergencyNetworkIsolation(): Boolean {
-        var isolated = false
+    fun triggerEmergencyNetworkIsolation(isArabic: Boolean = true): Boolean {
+        var success = false
 
+        // 1. محاولة التعطيل القديم (يعمل على أندرويد 9 فما دون)
         try {
-            // 1. إيقاف الواي فاي فوراً
             @Suppress("DEPRECATION")
             if (wifiManager != null && wifiManager.isWifiEnabled) {
+                @Suppress("DEPRECATION")
                 wifiManager.isWifiEnabled = false
-                isolated = true
+                success = true
             }
-
-            // 2. تفعيل عزل الحزم الشبكية للتطبيقات غير المصرح بها
-            isolateActiveSockets()
-            isolated = true
-
         } catch (e: Exception) {
-            e.printStackTrace()
+            // Android 10+ blocks this call
         }
 
-        return isolated
-    }
-
-    private fun isolateActiveSockets() {
-        // يتم طلب إلغاء توجيه الحزم الخارجية لقطع اتصال التروجان النشط
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            val builder = NetworkRequest.Builder()
-                .removeCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-            // قطع حزم الإنترنت اللحظية
+        // 2. لأنظمة أندرويد الحديثة (Android 10 فما فوق): إطلاق نافذة قطع الإنترنت الفورية
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val panelIntent = Intent(Settings.Panel.ACTION_INTERNET_CONNECTIVITY).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                context.startActivity(panelIntent)
+                success = true
+            } else {
+                val airplaneIntent = Intent(Settings.ACTION_AIRPLANE_MODE_SETTINGS).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                context.startActivity(airplaneIntent)
+                success = true
+            }
+        } catch (e: Exception) {
+            // Fallback to wireless settings
+            try {
+                val wirelessIntent = Intent(Settings.ACTION_WIRELESS_SETTINGS).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                context.startActivity(wirelessIntent)
+                success = true
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+            }
         }
+
+        val msg = if (isArabic) {
+            "⚡ تم تفعيل قاطع الإنترنت! قم بإيقاف الواي فاي والبيانات فوراً لعزل التروجان."
+        } else {
+            "⚡ Coupe-circuit activé ! Coupez le Wi-Fi et les données pour isoler le malware."
+        }
+        Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+
+        return success
     }
 
     /**
-     * التحقق هل الهاتف معزول حالياً
+     * التحقق هل الهاتف متصل بالإنترنت حالياً
      */
     fun isNetworkConnected(): Boolean {
         val cm = connectivityManager ?: return false
