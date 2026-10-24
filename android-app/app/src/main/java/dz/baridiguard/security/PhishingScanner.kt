@@ -32,6 +32,7 @@ class PhishingScanner {
     // النطاقات الرسمية الموثوقة 100% لبريد الجزائر والمؤسسات الوطنية
     private val officialTrustedDomains = listOf(
         "poste.dz",
+        "baridiweb.poste.dz",
         "baridinet.poste.dz",
         "eccp.poste.dz",
         "anem.dz",

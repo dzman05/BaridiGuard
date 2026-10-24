@@ -43,31 +43,35 @@ jobs:
       - name: Copy & Rename APK
         run: |
           mkdir -p release-output
-          cp android-app/app/build/outputs/apk/debug/app-debug.apk release-output/BaridiGuard-v1.2.apk
+          cp android-app/app/build/outputs/apk/debug/app-debug.apk release-output/BaridiGuard-v1.2.1.apk
 
       - name: Upload APK as Workflow Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: BaridiGuard-v1.2-APK
-          path: release-output/BaridiGuard-v1.2.apk
+          name: BaridiGuard-v1.2.1-APK
+          path: release-output/BaridiGuard-v1.2.1.apk
           retention-days: 30
 
       - name: Create GitHub Release with APK
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.2.0
-          name: "BaridiGuard v1.2.0 (BaridiMob Launch Alarm Guardian)"
+          tag_name: v1.2.1
+          name: "BaridiGuard v1.2.1 (FontAwesome & Triple-Redundancy Siren)"
           body: |
-            ## 🛡️ BaridiGuard v1.2.0 - حارس بريدي (رادار إنذار بريدي موب)
+            ## 🛡️ BaridiGuard v1.2.1 - حارس بريدي (تحديث شامل)
             
-            ### ✨ الجديد والمهم في هذا الإصدار (Nouveautés majeures):
-            - 🚨 **إنذار فوري عند فتح بريدي موب (Alarme ouverture BaridiMob)**:
-              حتى لو كان الهاتف شغالاً بيد الضحية أو يتحكم به فيروس خلسة وراء شاشة سوداء؛ بمجرد تشغيل تطبيق `dz.poste.baridimob`، يطلق حارس بريدي صفارة إنذار أمنية قوية وإشعاراً عاجلاً لتنبيه الضحية فوراً لمنع سرقة الرصيد.
-            - 🔘 **زر اختبار صفارة بريدي موب (Bouton Test Alarme)**: في الواجهة الرئيسية لتجربة الصوت والإشعار مباشرة.
-            - 🌐 **تفعيل إذن رادار الاستخدام (Accès à l'utilisation)**: بنقرة واحدة لتمكين الهاتف من رصد التطبيقات البنكية لحظياً.
-            - 🇩🇿 **دعم اللغتين العربية والفرنسية بالكامل**: مع زر تبديل فوري في الشريط العلوي.
-            - ⚡ **قاطع الإنترنت التلقائي وعزل الهاتف**: لقطع تواصل التروجان مع سيرفر المخترقين.
-          files: release-output/BaridiGuard-v1.2.apk
+            ### ✨ الجديد في هذا التحديث (Nouveautés v1.2.1):
+            - 🔊 **مشغل إنذار ثلاثي القنوات (Triple-Redundancy Cyber Alarm)**:
+              إطلاق صفارة الإنذار بأقصى قوة صوتية (100% Volume) عبر `ToneGenerator` و `RingtoneManager` و `AudioTrack` مع هزاز الاستنفار. مضمون العمل على كافة أجهزة أندرويد.
+            - 🎨 **أيقونات FontAwesome الاحترافية**:
+              استبدال كامل لأيقونات Material بأيقونات FontAwesome المتناسقة (Shield, Bell, Wifi, Bolt, Lock, Scale, Globe).
+            - 🚨 **خدمة حراسة إمكانية الوصول الفورية (Accessibility Launch Guardian)**:
+              رصد تشغيل `dz.poste.baridimob` بالملي ثانية بدون استهلاك للبطارية.
+            - 🌐 **دعم بوابة بريدي ويب الرسمية**:
+              تضمين رابط فحص الموقع الرسمي المعتمد `https://baridiweb.poste.dz/`.
+            - 🏷️ **تحديث معرّف الإصدار**:
+              `versionCode = 4` و `versionName = "1.2.1"` مع إظهار شارة الإصدار بوضوح في أعلى التطبيق.
+          files: release-output/BaridiGuard-v1.2.1.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

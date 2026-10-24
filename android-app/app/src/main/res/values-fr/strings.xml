@@ -22,4 +22,5 @@
     <string name="title_phishing_shield">Bouclier anti-hameçonnage (Anti-Phishing)</string>
     <string name="title_forensic_report">Dossier judiciaire de cybercriminalité</string>
     <string name="btn_export_forensic">Générer le rapport de plainte (Police / Gendarmerie)</string>
+    <string name="accessibility_service_description">Surveillance instantanée de l\'ouverture de BaridiMob et alarme anti-malware.</string>
 </resources>

@@ -140,8 +140,8 @@ class BaridiMobLaunchDetector(private val context: Context) {
      * إطلاق الإنذار الصوتي والإشعار التحذيري العاجل
      */
     fun triggerBaridiMobSecurityAlert(isArabic: Boolean = true) {
-        // 1. تشغيل صفارة الإنذار السيبرانية فوراً بنبرة تحذير قوية
-        playChimeSiren()
+        // 1. تشغيل صفارة الإنذار الفائقة متعددة القنوات فوراً (ToneGenerator + Ringtone + Siren)
+        EmergencyAlarmPlayer.playAudibleAlarm(context)
 
         // 2. إظهار الإشعار ذو الأولوية القصوى Heads-Up
         val intent = Intent(context, MainActivity::class.java).apply {

@@ -19,13 +19,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -96,47 +89,10 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * تشغيل صوت إنذار سيبراني خالص بدون أي صوت بشري (Pure Multi-Tone Cyber Siren)
+     * تشغيل صوت إنذار سيبراني فائق متعدد القنوات (Triple-Redundancy Cyber Siren)
      */
     fun playPureCyberAlarmSiren() {
-        Thread {
-            try {
-                val sampleRate = 44100
-                val durationMs = 1800
-                val numSamples = (durationMs * sampleRate / 1000)
-                val buffer = ShortArray(numSamples)
-
-                for (i in 0 until numSamples) {
-                    val progress = i.toDouble() / numSamples
-                    val freq = 850.0 + 750.0 * kotlin.math.sin(2.0 * Math.PI * progress * 5.0)
-                    val angle = 2.0 * Math.PI * i * freq / sampleRate
-                    buffer[i] = (kotlin.math.sin(angle) * Short.MAX_VALUE * 0.75).toInt().toShort()
-                }
-
-                val track = AudioTrack.Builder()
-                    .setAudioAttributes(
-                        AudioAttributes.Builder()
-                            .setUsage(AudioAttributes.USAGE_ALARM)
-                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                            .build()
-                    )
-                    .setAudioFormat(
-                        AudioFormat.Builder()
-                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                            .setSampleRate(sampleRate)
-                            .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-                            .build()
-                    )
-                    .setBufferSizeInBytes(buffer.size * 2)
-                    .setTransferMode(AudioTrack.MODE_STATIC)
-                    .build()
-
-                track.write(buffer, 0, buffer.size)
-                track.play()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }.start()
+        EmergencyAlarmPlayer.playAudibleAlarm(this)
     }
 }
 
@@ -182,10 +138,25 @@ fun MainAppScreen(
                             )
                             Spacer(modifier = Modifier.width(10.dp))
                             Column {
-                                Text("BARIDIGUARD", fontWeight = FontWeight.Black, fontSize = 16.sp, color = Color.White)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text("BARIDIGUARD", fontWeight = FontWeight.Black, fontSize = 15.sp, color = Color.White)
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Surface(
+                                        shape = RoundedCornerShape(4.dp),
+                                        color = EmeraldDark
+                                    ) {
+                                        Text(
+                                            "v1.2.1",
+                                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = EmeraldLight
+                                        )
+                                    }
+                                }
                                 Text(
-                                    text = if (isArabic) "درع حماية بريدي موب" else "Bouclier BaridiMob",
-                                    fontSize = 11.sp,
+                                    text = if (isArabic) "حارس بريدي • رادار الإنذار" else "Bouclier BaridiMob • v1.2.1",
+                                    fontSize = 10.5.sp,
                                     color = EmeraldLight
                                 )
                             }
@@ -210,9 +181,14 @@ fun MainAppScreen(
                             )
                         }
 
-                        // Emergency Button 1530
+                        // Emergency Button 1530 with FontAwesome Triangle Exclamation
                         IconButton(onClick = { showEmergencyDialog = true }) {
-                            Icon(Icons.Default.Warning, contentDescription = "Urgence", tint = DangerRed)
+                            Icon(
+                                painter = painterResource(id = R.drawable.fa_triangle_exclamation),
+                                contentDescription = "Urgence",
+                                tint = DangerRed,
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = GuardSurfaceDark)
@@ -223,19 +199,40 @@ fun MainAppScreen(
                     NavigationBarItem(
                         selected = selectedTab == 0,
                         onClick = { selectedTab = 0 },
-                        icon = { Icon(Icons.Default.Home, contentDescription = null) },
+                        icon = { 
+                            Icon(
+                                painter = painterResource(id = R.drawable.fa_house),
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                                tint = if (selectedTab == 0) EmeraldLight else Color.Gray
+                            ) 
+                        },
                         label = { Text(if (isArabic) "الرئيسية" else "Accueil", fontSize = 11.sp) }
                     )
                     NavigationBarItem(
                         selected = selectedTab == 1,
                         onClick = { selectedTab = 1 },
-                        icon = { Icon(Icons.Default.Search, contentDescription = null) },
+                        icon = { 
+                            Icon(
+                                painter = painterResource(id = R.drawable.fa_magnifying_glass),
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                                tint = if (selectedTab == 1) EmeraldLight else Color.Gray
+                            ) 
+                        },
                         label = { Text(if (isArabic) "الروابط" else "Liens", fontSize = 11.sp) }
                     )
                     NavigationBarItem(
                         selected = selectedTab == 2,
                         onClick = { selectedTab = 2 },
-                        icon = { Icon(Icons.Default.Info, contentDescription = null) },
+                        icon = { 
+                            Icon(
+                                painter = painterResource(id = R.drawable.fa_scale_balanced),
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                                tint = if (selectedTab == 2) EmeraldLight else Color.Gray
+                            ) 
+                        },
                         label = { Text(if (isArabic) "قضائي" else "Justice", fontSize = 11.sp) }
                     )
                 }
@@ -449,12 +446,21 @@ fun DashboardTab(
                 border = androidx.compose.foundation.BorderStroke(1.dp, GoldAccent),
                 shape = RoundedCornerShape(10.dp)
             ) {
-                Text(
-                    text = if (isArabic) "🔊 صفارة الإنذار" else "🔊 Sirène d'alarme",
-                    fontSize = 11.sp,
-                    color = GoldLight,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.fa_bell),
+                        contentDescription = null,
+                        tint = GoldLight,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = if (isArabic) "صفارة الإنذار" else "Sirène d'alarme",
+                        fontSize = 11.sp,
+                        color = GoldLight,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
 
             Button(
@@ -464,12 +470,21 @@ fun DashboardTab(
                 border = androidx.compose.foundation.BorderStroke(1.dp, DangerRed),
                 shape = RoundedCornerShape(10.dp)
             ) {
-                Text(
-                    text = if (isArabic) "⚡ قاطع الإنترنت" else "⚡ Coupe-circuit Net",
-                    fontSize = 11.sp,
-                    color = DangerRed,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.fa_bolt),
+                        contentDescription = null,
+                        tint = DangerRed,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = if (isArabic) "قاطع الإنترنت" else "Coupe-circuit",
+                        fontSize = 11.sp,
+                        color = DangerRed,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
 
@@ -480,17 +495,26 @@ fun DashboardTab(
             onClick = onTestBaridiAlarm,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(44.dp),
+                .height(46.dp),
             colors = ButtonDefaults.buttonColors(containerColor = GuardCardDark),
             border = androidx.compose.foundation.BorderStroke(1.dp, EmeraldLight),
             shape = RoundedCornerShape(10.dp)
         ) {
-            Text(
-                text = if (isArabic) "🚨 اختبار إنذار فتح بريدي موب" else "🚨 Tester l'alarme ouverture BaridiMob",
-                fontSize = 12.sp,
-                color = EmeraldLight,
-                fontWeight = FontWeight.Bold
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    painter = painterResource(id = R.drawable.fa_triangle_exclamation),
+                    contentDescription = null,
+                    tint = EmeraldLight,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = if (isArabic) "🚨 تجربة صفارة إنذار بريدي موب (Test)" else "🚨 Tester l'alarme ouverture BaridiMob",
+                    fontSize = 12.sp,
+                    color = EmeraldLight,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
 
         // Usage Access Permission Banner if not yet granted
@@ -505,20 +529,25 @@ fun DashboardTab(
                 shape = RoundedCornerShape(10.dp)
             ) {
                 Row(
-                    modifier = Modifier.padding(10.dp),
+                    modifier = Modifier.padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.Warning, contentDescription = null, tint = GoldAccent, modifier = Modifier.size(24.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        painter = painterResource(id = R.drawable.fa_triangle_exclamation),
+                        contentDescription = null,
+                        tint = GoldAccent,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
                     Column {
                         Text(
-                            text = if (isArabic) "اضغط هنا لتفعيل رادار بريدي موب التلقائي" else "Cliquez pour activer le radar BaridiMob",
+                            text = if (isArabic) "⚠️ اضغط هنا لتفعيل رادار بريدي موب التلقائي" else "⚠️ Cliquez pour activer le radar BaridiMob",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 11.sp,
+                            fontSize = 11.5.sp,
                             color = Color.White
                         )
                         Text(
-                            text = if (isArabic) "يتطلب منح إذن مراقبة الاستخدام (Accès à l'utilisation)" else "Autorisation d'accès aux données d'utilisation requise",
+                            text = if (isArabic) "إذن مراقبة الاستخدام ضروري لرصد فتح بريدي موب فورياً" else "Accès à l'utilisation requis pour détecter BaridiMob",
                             fontSize = 9.5.sp,
                             color = Color.LightGray
                         )
@@ -542,26 +571,31 @@ fun DashboardTab(
                     color = Color.White
                 )
                 DefenseRow(
+                    iconRes = R.drawable.fa_bell,
                     title = if (isArabic) "رادار إنذار تشغيل بريدي موب" else "Alarme ouverture BaridiMob",
                     subtitle = if (isArabic) "صفارة إنذار وتحذير فوري عند فتح التطبيق" else "Alerte sonore immédiate dès le lancement de BaridiMob",
                     active = true
                 )
                 DefenseRow(
+                    iconRes = R.drawable.fa_shield_halved,
                     title = if (isArabic) "درع تطبيق بريدي موب" else "Blindage BaridiMob",
                     subtitle = if (isArabic) "حظر النقرات غير المرئية في الخلفية" else "Blocage des clics invisibles en arrière-plan",
                     active = true
                 )
                 DefenseRow(
+                    iconRes = R.drawable.fa_lock,
                     title = if (isArabic) "كاشف الشاشة السوداء" else "Détecteur d'écran noir",
                     subtitle = if (isArabic) "منع شاشة التحديث المزيفة" else "Empêche l'écran factice de mise à jour",
                     active = true
                 )
                 DefenseRow(
+                    iconRes = R.drawable.fa_wifi,
                     title = if (isArabic) "قاطع الإنترنت التلقائي" else "Coupe-circuit réseau",
                     subtitle = if (isArabic) "عزل الهاتف فوراً لقطع اتصال التروجان" else "Isolation réseau immédiate anti-trojan",
                     active = true
                 )
                 DefenseRow(
+                    iconRes = R.drawable.fa_shield_virus,
                     title = if (isArabic) "درع الحماية الذاتية (Anti-Kill)" else "Auto-défense (Anti-Kill)",
                     subtitle = if (isArabic) "منع الفيروس من فرض الإيقاف أو الحذف" else "Immunité contre l'arrêt forcé par un malware",
                     active = true
@@ -572,15 +606,33 @@ fun DashboardTab(
 }
 
 @Composable
-fun DefenseRow(title: String, subtitle: String, active: Boolean) {
+fun DefenseRow(iconRes: Int, title: String, subtitle: String, active: Boolean) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(title, fontWeight = FontWeight.Bold, fontSize = 12.5.sp, color = Color.White)
-            Text(subtitle, fontSize = 9.5.sp, color = Color.Gray)
+        Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(GuardSurfaceDark)
+                    .border(1.dp, EmeraldLight.copy(alpha = 0.3f), RoundedCornerShape(8.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = iconRes),
+                    contentDescription = null,
+                    tint = EmeraldLight,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(10.dp))
+            Column {
+                Text(title, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color.White)
+                Text(subtitle, fontSize = 9.sp, color = Color.Gray)
+            }
         }
         Switch(
             checked = active,
@@ -621,6 +673,56 @@ fun PhishingScannerTab(isArabic: Boolean, scanner: PhishingScanner) {
             label = { Text(if (isArabic) "أدخل الرابط للفحص" else "Entrer le lien à analyser") },
             shape = RoundedCornerShape(12.dp)
         )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Quick test URLs: Official BaridiWeb vs Scam Link
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedButton(
+                onClick = {
+                    inputUrl = "https://baridiweb.poste.dz/"
+                    scanResult = scanner.analyzeUrl("https://baridiweb.poste.dz/")
+                },
+                modifier = Modifier.weight(1f),
+                border = androidx.compose.foundation.BorderStroke(1.dp, EmeraldLight),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.fa_globe),
+                        contentDescription = null,
+                        tint = EmeraldLight,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("baridiweb.poste.dz", fontSize = 9.5.sp, color = EmeraldLight)
+                }
+            }
+
+            OutlinedButton(
+                onClick = {
+                    inputUrl = "https://baridimob-update-algerie.cc"
+                    scanResult = scanner.analyzeUrl("https://baridimob-update-algerie.cc")
+                },
+                modifier = Modifier.weight(1f),
+                border = androidx.compose.foundation.BorderStroke(1.dp, DangerRed),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.fa_triangle_exclamation),
+                        contentDescription = null,
+                        tint = DangerRed,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(if (isArabic) "رابط احتيالي وهمي" else "Lien pirate test", fontSize = 9.5.sp, color = DangerRed)
+                }
+            }
+        }
 
         Spacer(modifier = Modifier.height(10.dp))
 
@@ -733,7 +835,12 @@ fun ForensicsTab(isArabic: Boolean, onGenerateReport: () -> Unit) {
             shape = RoundedCornerShape(12.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Share, contentDescription = null, tint = Color.Black)
+                Icon(
+                    painter = painterResource(id = R.drawable.fa_scale_balanced),
+                    contentDescription = null,
+                    tint = Color.Black,
+                    modifier = Modifier.size(18.dp)
+                )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = if (isArabic) "توليد وطباعة ملف الشكوى الجنائية" else "Générer le dossier judiciaire",

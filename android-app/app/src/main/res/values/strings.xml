@@ -22,4 +22,5 @@
     <string name="title_phishing_shield">درع روابط الاحتيال</string>
     <string name="title_forensic_report">حقيبة الضحية وتقرير الجريمة الإلكترونية</string>
     <string name="btn_export_forensic">توليد تقرير رسمي للشرطة / الدرك الوطني</string>
+    <string name="accessibility_service_description">حراسة فورية لرصد فتح تطبيق بريدي موب وإطلاق صفارة الإنذار عند تعرض الهاتف لقرصنة خفية.</string>
 </resources>
