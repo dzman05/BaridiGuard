@@ -38,7 +38,19 @@ jobs:
       - name: Build Debug APK
         working-directory: ./android-app
         run: |
-          gradle assembleDebug --stacktrace > ../build.log 2>&1 || (echo "FAILED_BUILD" && tail -n 100 ../build.log && exit 1)
+          gradle assembleDebug --stacktrace > ../build.log 2>&1 || true
+
+      - name: Push Log to GitHub Branch for Inspection
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B debug-log
+          tail -n 80 build.log > build-summary.txt
+          git add build-summary.txt
+          git commit -m "build log summary" || true
+          git push -f origin debug-log || true
+          grep "BUILD SUCCESSFUL" build.log || exit 1
 
       - name: Copy & Rename APK
         run: |
