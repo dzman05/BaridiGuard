@@ -13,6 +13,8 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
     
     <!-- Permission to audit installed apps (Accessibility & Overlay abusers) -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" 

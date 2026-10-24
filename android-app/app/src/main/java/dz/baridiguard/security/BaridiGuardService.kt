@@ -7,6 +7,7 @@ import android.content.Intent
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import dz.baridiguard.BaridiGuardApp
+import dz.baridiguard.R
 import dz.baridiguard.ui.MainActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +20,7 @@ import kotlinx.coroutines.launch
  * BaridiGuardService
  * 
  * خدمة حماية تعمل في الخلفية لمراقبة الأمان اللحظي،
- * رصد هجمات حجب الشاشة باللون الأسود وفحص الـ Accessibility الدوري.
+ * رصد تشغيل تطبيق بريدي موب لإطلاق إنذار فوري، كشف الشاشات السوداء، وفحص الـ Accessibility الدوري.
  */
 class BaridiGuardService : Service() {
 
@@ -27,11 +28,13 @@ class BaridiGuardService : Service() {
     private val scope = CoroutineScope(Dispatchers.Default + serviceJob)
     private lateinit var accessibilityWatchdog: AccessibilityWatchdog
     private lateinit var overlayDetector: OverlayDetector
+    private lateinit var baridiMobDetector: BaridiMobLaunchDetector
 
     override fun onCreate() {
         super.onCreate()
         accessibilityWatchdog = AccessibilityWatchdog(this)
         overlayDetector = OverlayDetector(this)
+        baridiMobDetector = BaridiMobLaunchDetector(this)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -45,16 +48,18 @@ class BaridiGuardService : Service() {
     private fun startSecurityLoop() {
         scope.launch {
             while (isActive) {
-                // فحص دوري كل 5 ثوانٍ
+                // 1. مراقبة فتح تطبيق بريدي موب في الواجهة (لإطلاق الإنذار فوراً)
+                baridiMobDetector.checkAndTriggerIfBaridiMobActive()
+
+                // 2. فحص خدمات إمكانية الوصول المشبوهة
                 val dangerousServices = accessibilityWatchdog.auditEnabledAccessibilityServices()
                     .filter { it.riskLevel == AccessibilityWatchdog.RiskLevel.CRITICAL }
 
                 if (dangerousServices.isNotEmpty()) {
-                    // إطلاق تنبيه عاجل
                     broadcastThreatDetected(dangerousServices.first().appName)
                 }
 
-                delay(5000)
+                delay(2000) // فحص سريع كل ثانيتين
             }
         }
     }
@@ -76,9 +81,9 @@ class BaridiGuardService : Service() {
         )
 
         return NotificationCompat.Builder(this, BaridiGuardApp.CHANNEL_GUARD_SERVICE)
-            .setSmallIcon(android.R.drawable.ic_lock_idle_lock)
+            .setSmallIcon(R.drawable.ic_launcher)
             .setContentTitle("BaridiGuard: درع الحماية نشط")
-            .setContentText("حماية بريدي موب ومراقبة التروجانات تعمل بنجاح")
+            .setContentText("رادار مراقبة بريدي موب ومكافحة التروجانات يعمل بنجاح")
             .setContentIntent(pendingIntent)
             .setOngoing(true)
             .build()

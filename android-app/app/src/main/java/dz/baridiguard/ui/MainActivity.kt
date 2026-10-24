@@ -52,6 +52,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var networkKillSwitch: NetworkKillSwitch
     private lateinit var phishingScanner: PhishingScanner
     private lateinit var forensicReportGenerator: ForensicReportGenerator
+    private lateinit var baridiMobDetector: BaridiMobLaunchDetector
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,6 +61,7 @@ class MainActivity : ComponentActivity() {
         networkKillSwitch = NetworkKillSwitch(this)
         phishingScanner = PhishingScanner()
         forensicReportGenerator = ForensicReportGenerator(this)
+        baridiMobDetector = BaridiMobLaunchDetector(this)
 
         startProtectionService()
 
@@ -71,6 +73,7 @@ class MainActivity : ComponentActivity() {
                     killSwitch = networkKillSwitch,
                     phishingScanner = phishingScanner,
                     forensics = forensicReportGenerator,
+                    baridiMobDetector = baridiMobDetector,
                     onPlaySiren = { playPureCyberAlarmSiren() },
                     onCall1530 = { callAlgeriePosteEmergency() }
                 )
@@ -145,6 +148,7 @@ fun MainAppScreen(
     killSwitch: NetworkKillSwitch,
     phishingScanner: PhishingScanner,
     forensics: ForensicReportGenerator,
+    baridiMobDetector: BaridiMobLaunchDetector,
     onPlaySiren: () -> Unit,
     onCall1530: () -> Unit
 ) {
@@ -244,6 +248,7 @@ fun MainAppScreen(
                         isArabic = isArabic,
                         securityScore = securityScore,
                         isScanning = isScanning,
+                        hasUsagePermission = baridiMobDetector.hasUsageStatsPermission(),
                         onStartScan = {
                             coroutineScope.launch {
                                 isScanning = true
@@ -256,6 +261,12 @@ fun MainAppScreen(
                         onTriggerKillSwitch = {
                             onPlaySiren()
                             killSwitch.triggerEmergencyNetworkIsolation(isArabic)
+                        },
+                        onTestBaridiAlarm = {
+                            baridiMobDetector.triggerBaridiMobSecurityAlert(isArabic)
+                        },
+                        onOpenUsageSettings = {
+                            baridiMobDetector.openUsageAccessSettings()
                         }
                     )
                     1 -> PhishingScannerTab(isArabic, phishingScanner)
@@ -361,9 +372,12 @@ fun DashboardTab(
     isArabic: Boolean,
     securityScore: Int,
     isScanning: Boolean,
+    hasUsagePermission: Boolean,
     onStartScan: () -> Unit,
     onTriggerSiren: () -> Unit,
-    onTriggerKillSwitch: () -> Unit
+    onTriggerKillSwitch: () -> Unit,
+    onTestBaridiAlarm: () -> Unit,
+    onOpenUsageSettings: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -459,7 +473,61 @@ fun DashboardTab(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Test BaridiMob Launch Alarm Button
+        Button(
+            onClick = onTestBaridiAlarm,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(44.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = GuardCardDark),
+            border = androidx.compose.foundation.BorderStroke(1.dp, EmeraldLight),
+            shape = RoundedCornerShape(10.dp)
+        ) {
+            Text(
+                text = if (isArabic) "🚨 اختبار إنذار فتح بريدي موب" else "🚨 Tester l'alarme ouverture BaridiMob",
+                fontSize = 12.sp,
+                color = EmeraldLight,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        // Usage Access Permission Banner if not yet granted
+        if (!hasUsagePermission) {
+            Spacer(modifier = Modifier.height(10.dp))
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onOpenUsageSettings() },
+                colors = CardDefaults.cardColors(containerColor = DangerBg),
+                border = androidx.compose.foundation.BorderStroke(1.dp, GoldAccent),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.Warning, contentDescription = null, tint = GoldAccent, modifier = Modifier.size(24.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            text = if (isArabic) "اضغط هنا لتفعيل رادار بريدي موب التلقائي" else "Cliquez pour activer le radar BaridiMob",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp,
+                            color = Color.White
+                        )
+                        Text(
+                            text = if (isArabic) "يتطلب منح إذن مراقبة الاستخدام (Accès à l'utilisation)" else "Autorisation d'accès aux données d'utilisation requise",
+                            fontSize = 9.5.sp,
+                            color = Color.LightGray
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
 
         // Defenses Card
         Card(
@@ -472,6 +540,11 @@ fun DashboardTab(
                     text = if (isArabic) "حالة دروع الحماية النشطة" else "Boucliers de défense actifs",
                     fontWeight = FontWeight.Bold,
                     color = Color.White
+                )
+                DefenseRow(
+                    title = if (isArabic) "رادار إنذار تشغيل بريدي موب" else "Alarme ouverture BaridiMob",
+                    subtitle = if (isArabic) "صفارة إنذار وتحذير فوري عند فتح التطبيق" else "Alerte sonore immédiate dès le lancement de BaridiMob",
+                    active = true
                 )
                 DefenseRow(
                     title = if (isArabic) "درع تطبيق بريدي موب" else "Blindage BaridiMob",
