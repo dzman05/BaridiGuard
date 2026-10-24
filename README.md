@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/dzman05/BaridiGuard/main/logo.svg" alt="BaridiGuard Logo" width="520">
+</p>
+
 # BaridiGuard - حارس بريدي
 ## نظام الحماية الاستباقية لتطبيقات الدفع المصرفي على أندرويد
 
@@ -90,35 +94,6 @@ BaridiGuard هو مشروع برمجي أمني مستقل ومفتوح المص
 1. المعالجة المحلية الكاملة (Local-Only Processing): كافة عمليات فحص الروابط، وحفظ أكواد التأكيد، ومراقبة النوافذ تجري محليا داخل معالج الهاتف دون استخدام أي سيرفر خارجي.
 2. انعدام جمع البيانات (Zero Data Collection): لا يجمع التطبيق أي معلومات عن المستخدم، ولا يسجل جهات الاتصال، ولا يتتبع الموقع الجغرافي، ولا يقرأ أي كلمات مرور أو معطيات شخصية.
 3. مشروع مفتوح المصدر (Open Source): الكود المصدري متاح بالكامل على منصة جيت هاب لأي مختص في الأمن البرمجي للتحقق والتدقيق المستقل.
-
----
-
-### هيكل المشروع البرمجي (Architecture)
-
-```text
-android-app/
-├── app/
-│   ├── build.gradle.kts           // إعدادات البناء، إصدار 1.0.0، ومكتبات Compose
-│   └── src/main/
-│       ├── AndroidManifest.xml    // الأذونات والخدمات المسجلة
-│       ├── java/dz/baridiguard/
-│       │   ├── BaridiGuardApp.kt  // تهيئة قنوات الإشعارات
-│       │   ├── security/
-│       │   │   ├── BaridiAccessibilityGuardService.kt  // خدمة رصد فتح بريدي موب
-│       │   │   ├── BaridiDeviceAdminReceiver.kt        // مسؤول الجهاز لمنع الإيقاف
-│       │   │   ├── BaridiMobLaunchDetector.kt          // رادار التحقق من الحزمة
-│       │   │   ├── EmergencyAlarmPlayer.kt             // مشغل الصوت التلقائي
-│       │   │   ├── ForensicReportGenerator.kt          // مولد التقرير الجنائي
-│       │   │   ├── NetworkKillSwitch.kt                // قاطع الشبكة
-│       │   │   ├── OtpVaultReceiver.kt                 // لاقط الرسائل بالأولوية 999
-│       │   │   ├── OtpVaultStorage.kt                  // الخزنة المشفرة لرسائل OTP
-│       │   │   ├── OverlayDetector.kt                  // كاشف التراكبات
-│       │   │   └── PhishingScanner.kt                  // فاحص الروابط
-│       │   └── ui/
-│       │       ├── MainActivity.kt                     // شاشات Jetpack Compose
-│       │       └── theme/                              // سمة الألوان والتصميم
-│       └── res/                                        // الموارد والأيقونات الرسومية
-```
 
 ---
 
