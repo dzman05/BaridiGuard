@@ -15,6 +15,7 @@ import android.view.accessibility.AccessibilityEvent
 class BaridiAccessibilityGuardService : AccessibilityService() {
 
     private val targetBankingPackages = setOf(
+        "ru.bpc.mobilebank.bpc",
         "dz.poste.baridimob",
         "com.baridimob",
         "dz.poste.eccp",

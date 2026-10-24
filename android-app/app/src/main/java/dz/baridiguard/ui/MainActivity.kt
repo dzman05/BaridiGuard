@@ -85,9 +85,10 @@ class MainActivity : ComponentActivity() {
     private fun launchBaridiMobApp() {
         try {
             val pm = packageManager
-            val intent = pm.getLaunchIntentForPackage("dz.poste.baridimob")
+            val intent = pm.getLaunchIntentForPackage("ru.bpc.mobilebank.bpc")
+                ?: pm.getLaunchIntentForPackage("dz.poste.baridimob")
                 ?: pm.getLaunchIntentForPackage("com.baridimob")
-                ?: Intent(Intent.ACTION_VIEW, Uri.parse("https://baridiweb.poste.dz/"))
+                ?: Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=ru.bpc.mobilebank.bpc"))
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             startActivity(intent)
         } catch (e: Exception) {
@@ -169,7 +170,7 @@ fun MainAppScreen(
                                         color = EmeraldDark
                                     ) {
                                         Text(
-                                            "v1.2.3",
+                                            "v1.2.4",
                                             modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
                                             fontSize = 9.sp,
                                             fontWeight = FontWeight.Bold,
@@ -178,7 +179,7 @@ fun MainAppScreen(
                                     }
                                 }
                                 Text(
-                                    text = if (isArabic) "حارس بريدي • رادار الإنذار" else "Bouclier BaridiMob • v1.2.3",
+                                    text = if (isArabic) "حارس بريدي • رادار الإنذار" else "Bouclier BaridiMob • v1.2.4",
                                     fontSize = 10.5.sp,
                                     color = EmeraldLight
                                 )

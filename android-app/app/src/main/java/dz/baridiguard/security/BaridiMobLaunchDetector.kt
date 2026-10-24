@@ -30,8 +30,9 @@ import dz.baridiguard.ui.MainActivity
  */
 class BaridiMobLaunchDetector(private val context: Context) {
 
-    // قائمة حزم بريد الجزائر المستهدفة بالهجمات
+    // قائمة حزم بريد الجزائر الرسمية المستهدفة (بما فيها الحزمة الرسمية في متجر جوجل ru.bpc.mobilebank.bpc)
     val targetBankingPackages = setOf(
+        "ru.bpc.mobilebank.bpc",
         "dz.poste.baridimob",
         "com.baridimob",
         "dz.poste.eccp",
@@ -41,7 +42,9 @@ class BaridiMobLaunchDetector(private val context: Context) {
     fun isBankingPackage(packageName: String): Boolean {
         val lower = packageName.lowercase()
         if (lower.contains("baridiguard")) return false
-        return lower.contains("baridimob") ||
+        return lower == "ru.bpc.mobilebank.bpc" ||
+               lower.contains("mobilebank.bpc") ||
+               lower.contains("baridimob") ||
                lower == "dz.poste.eccp" ||
                lower == "dz.poste.baridinet" ||
                (lower.startsWith("dz.poste.") && !lower.contains("baridiguard")) ||
