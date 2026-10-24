@@ -58,20 +58,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.0
-          name: "BaridiGuard v1.0.0 - حارس بريدي (Official Release)"
-          body: |
-            ## 🛡️ BaridiGuard v1.0.0 - حارس بريدي (الإصدار الرسمي الشامل)
-            
-            ### ✨ ميزات الإصدار 1.0.0 (Version Officielle 1.0.0):
-            - 🔒 **حماية محلية 100% بدون اتصال خارجي (Zero Data Collection / 100% Offline)**:
-              التطبيق لا يتصل بأي سيرفر ولا يرسل أي معلومة إطلاقاً خارج الهاتف.
-            - 🚨 **رادار كشف تشغيل تطبيق بريدي موب الرسمي (`ru.bpc.mobilebank.bpc`)**.
-            - 📩 **خزنة أكواد التأكيد (OTP Vault) بأسبقية قصوى (Priority 999)** لمنع الحذف الخفي بواسطة التروجان.
-            - 🛑 **كاشف الشاشة السوداء والتراكب الخبيث** ("جاري تحديث الهاتف...").
-            - ⚡ **قاطع الإنترنت الطارئ (Kill-Switch)** لعزل الهاتف فوراً.
-            - 🛡️ **درع الحماية الذاتية ومسؤول الجهاز (Anti-Kill)** ضد الحذف القسري.
-            - 📦 **حزمة Google Play الرسمية (`BaridiGuard-v1.0.0.aab`)** جاهزة للرفع على المتجر.
-            - 📱 **ملف APK للتثبيت المباشر (`BaridiGuard-v1.0.0.apk`)**.
+          name: "BaridiGuard v1.0.0 (Official Release)"
+          body_path: README.md
           files: |
             release-output/BaridiGuard-v1.0.0.apk
             release-output/BaridiGuard-v1.0.0.aab
