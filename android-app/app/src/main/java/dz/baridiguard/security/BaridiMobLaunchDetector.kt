@@ -39,8 +39,9 @@ class BaridiMobLaunchDetector(private val context: Context) {
     )
 
     companion object {
+        private var wasBaridiMobForeground = false
         private var lastAlertTime: Long = 0
-        private const val alertCooldownMs: Long = 10000 // منع تكرار الإنذار كل 10 ثوانٍ
+        private const val alertCooldownMs: Long = 20000 // 20 ثانية كحد أدنى
     }
 
     /**
@@ -78,12 +79,19 @@ class BaridiMobLaunchDetector(private val context: Context) {
         val isBaridiMobForeground = isBaridiMobInForeground()
 
         if (isBaridiMobForeground) {
-            val now = System.currentTimeMillis()
-            if (now - lastAlertTime > alertCooldownMs) {
-                lastAlertTime = now
-                triggerBaridiMobSecurityAlert(isArabic)
-                return true
+            // انطلاق جديد فقط! (New Launch Transition)
+            if (!wasBaridiMobForeground) {
+                wasBaridiMobForeground = true
+                val now = System.currentTimeMillis()
+                if (now - lastAlertTime > alertCooldownMs) {
+                    lastAlertTime = now
+                    triggerBaridiMobSecurityAlert(isArabic)
+                    return true
+                }
             }
+        } else {
+            // المستخدم غادر بريدي موب -> إعادة ضبط التبديل
+            wasBaridiMobForeground = false
         }
         return false
     }

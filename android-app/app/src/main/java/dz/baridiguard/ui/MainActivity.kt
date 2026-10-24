@@ -112,6 +112,7 @@ fun MainAppScreen(
     var isArabic by remember { mutableStateOf(true) }
     var selectedTab by remember { mutableStateOf(0) }
     var isScanning by remember { mutableStateOf(false) }
+    var isAlarmPlaying by remember { mutableStateOf(false) }
     var securityScore by remember { mutableStateOf(98) }
     var showEmergencyDialog by remember { mutableStateOf(false) }
     var showDossierDialog by remember { mutableStateOf(false) }
@@ -146,7 +147,7 @@ fun MainAppScreen(
                                         color = EmeraldDark
                                     ) {
                                         Text(
-                                            "v1.2.1",
+                                            "v1.2.2",
                                             modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
                                             fontSize = 9.sp,
                                             fontWeight = FontWeight.Bold,
@@ -155,7 +156,7 @@ fun MainAppScreen(
                                     }
                                 }
                                 Text(
-                                    text = if (isArabic) "حارس بريدي • رادار الإنذار" else "Bouclier BaridiMob • v1.2.1",
+                                    text = if (isArabic) "حارس بريدي • رادار الإنذار" else "Bouclier BaridiMob • v1.2.2",
                                     fontSize = 10.5.sp,
                                     color = EmeraldLight
                                 )
@@ -245,6 +246,7 @@ fun MainAppScreen(
                         isArabic = isArabic,
                         securityScore = securityScore,
                         isScanning = isScanning,
+                        isAlarmPlaying = isAlarmPlaying,
                         hasUsagePermission = baridiMobDetector.hasUsageStatsPermission(),
                         onStartScan = {
                             coroutineScope.launch {
@@ -254,13 +256,39 @@ fun MainAppScreen(
                                 securityScore = 100
                             }
                         },
-                        onTriggerSiren = onPlaySiren,
+                        onTriggerSiren = {
+                            if (isAlarmPlaying) {
+                                EmergencyAlarmPlayer.stopAlarm()
+                                isAlarmPlaying = false
+                            } else {
+                                isAlarmPlaying = true
+                                onPlaySiren()
+                                coroutineScope.launch {
+                                    delay(3700)
+                                    isAlarmPlaying = false
+                                }
+                            }
+                        },
+                        onStopAlarm = {
+                            EmergencyAlarmPlayer.stopAlarm()
+                            isAlarmPlaying = false
+                        },
                         onTriggerKillSwitch = {
                             onPlaySiren()
                             killSwitch.triggerEmergencyNetworkIsolation(isArabic)
                         },
                         onTestBaridiAlarm = {
-                            baridiMobDetector.triggerBaridiMobSecurityAlert(isArabic)
+                            if (isAlarmPlaying) {
+                                EmergencyAlarmPlayer.stopAlarm()
+                                isAlarmPlaying = false
+                            } else {
+                                isAlarmPlaying = true
+                                baridiMobDetector.triggerBaridiMobSecurityAlert(isArabic)
+                                coroutineScope.launch {
+                                    delay(3700)
+                                    isAlarmPlaying = false
+                                }
+                            }
                         },
                         onOpenUsageSettings = {
                             baridiMobDetector.openUsageAccessSettings()
@@ -369,9 +397,11 @@ fun DashboardTab(
     isArabic: Boolean,
     securityScore: Int,
     isScanning: Boolean,
+    isAlarmPlaying: Boolean,
     hasUsagePermission: Boolean,
     onStartScan: () -> Unit,
     onTriggerSiren: () -> Unit,
+    onStopAlarm: () -> Unit,
     onTriggerKillSwitch: () -> Unit,
     onTestBaridiAlarm: () -> Unit,
     onOpenUsageSettings: () -> Unit
@@ -436,6 +466,35 @@ fun DashboardTab(
         }
 
         Spacer(modifier = Modifier.height(14.dp))
+
+        // Big Prominent STOP ALARM Button when sound is active
+        if (isAlarmPlaying) {
+            Button(
+                onClick = onStopAlarm,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = DangerRed),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.fa_bell),
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = if (isArabic) "🛑 إيقاف صفارة الإنذار فوراً (Arrêter)" else "🛑 Arrêter l'alarme sonore",
+                        fontSize = 13.sp,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+        }
 
         // Action Buttons: Siren & Network Kill Switch
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {

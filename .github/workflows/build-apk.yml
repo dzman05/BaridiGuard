@@ -43,35 +43,32 @@ jobs:
       - name: Copy & Rename APK
         run: |
           mkdir -p release-output
-          cp android-app/app/build/outputs/apk/debug/app-debug.apk release-output/BaridiGuard-v1.2.1.apk
+          cp android-app/app/build/outputs/apk/debug/app-debug.apk release-output/BaridiGuard-v1.2.2.apk
 
       - name: Upload APK as Workflow Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: BaridiGuard-v1.2.1-APK
-          path: release-output/BaridiGuard-v1.2.1.apk
+          name: BaridiGuard-v1.2.2-APK
+          path: release-output/BaridiGuard-v1.2.2.apk
           retention-days: 30
 
       - name: Create GitHub Release with APK
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.2.1
-          name: "BaridiGuard v1.2.1 (FontAwesome & Triple-Redundancy Siren)"
+          tag_name: v1.2.2
+          name: "BaridiGuard v1.2.2 (Smart Auto-Stop Alarm & One-Time Launch Guardian)"
           body: |
-            ## 🛡️ BaridiGuard v1.2.1 - حارس بريدي (تحديث شامل)
+            ## 🛡️ BaridiGuard v1.2.2 - حارس بريدي (إيقاف الإنذار التلقائي واليدوي)
             
-            ### ✨ الجديد في هذا التحديث (Nouveautés v1.2.1):
-            - 🔊 **مشغل إنذار ثلاثي القنوات (Triple-Redundancy Cyber Alarm)**:
-              إطلاق صفارة الإنذار بأقصى قوة صوتية (100% Volume) عبر `ToneGenerator` و `RingtoneManager` و `AudioTrack` مع هزاز الاستنفار. مضمون العمل على كافة أجهزة أندرويد.
-            - 🎨 **أيقونات FontAwesome الاحترافية**:
-              استبدال كامل لأيقونات Material بأيقونات FontAwesome المتناسقة (Shield, Bell, Wifi, Bolt, Lock, Scale, Globe).
-            - 🚨 **خدمة حراسة إمكانية الوصول الفورية (Accessibility Launch Guardian)**:
-              رصد تشغيل `dz.poste.baridimob` بالملي ثانية بدون استهلاك للبطارية.
-            - 🌐 **دعم بوابة بريدي ويب الرسمية**:
-              تضمين رابط فحص الموقع الرسمي المعتمد `https://baridiweb.poste.dz/`.
-            - 🏷️ **تحديث معرّف الإصدار**:
-              `versionCode = 4` و `versionName = "1.2.1"` مع إظهار شارة الإصدار بوضوح في أعلى التطبيق.
-          files: release-output/BaridiGuard-v1.2.1.apk
+            ### ✨ الجديد في هذا التحديث (Nouveautés v1.2.2):
+            - ⏱️ **إيقاف الإنذار التلقائي (Auto-Stop après 3.5s)**:
+              توقف صفارة الإنذار تلقائياً بعد 3.5 ثوانٍ دون الاستمرار اللانهائي.
+            - 🛑 **زر إيقاف الإنذار الفوري (Bouton Arrêt Immédiat)**:
+              ظهور زر أحمر بارز في الواجهة الرئيسية لإسكات الإنذار فوراً بنقرة واحدة عند الرغبة.
+            - 🎯 **منع تكرار الإنذار أثناء استخدام بريدي موب**:
+              يطلق الإنذار مرة واحدة فقط عند فتح التطبيق، ولا يتكرر أثناء تنقل المستخدم داخل بريدي موب.
+            - 🎨 **أيقونات FontAwesome وتضمين بريدي ويب الرسمي**.
+          files: release-output/BaridiGuard-v1.2.2.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

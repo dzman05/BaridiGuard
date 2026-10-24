@@ -21,8 +21,9 @@ class BaridiAccessibilityGuardService : AccessibilityService() {
         "dz.poste.baridinet"
     )
 
+    private var isInsideBankingApp = false
     private var lastTriggerTime: Long = 0
-    private val cooldownMs: Long = 8000 // 8 ثوانٍ بين كل إنذار
+    private val cooldownMs: Long = 25000 // 25 ثانية لمنع التكرار
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
@@ -31,15 +32,19 @@ class BaridiAccessibilityGuardService : AccessibilityService() {
             val pkgName = event.packageName?.toString() ?: return
 
             if (targetBankingPackages.contains(pkgName)) {
-                val now = System.currentTimeMillis()
-                if (now - lastTriggerTime > cooldownMs) {
-                    lastTriggerTime = now
-                    // إطلاق صفارة الإنذار الشاملة فوراً
-                    EmergencyAlarmPlayer.playAudibleAlarm(applicationContext)
-
-                    // إرسال الإشعار العاجل
-                    BaridiMobLaunchDetector(applicationContext).triggerBaridiMobSecurityAlert(true)
+                // انطلاق جديد فقط لأول مرة يدخل فيها التطبيق
+                if (!isInsideBankingApp) {
+                    isInsideBankingApp = true
+                    val now = System.currentTimeMillis()
+                    if (now - lastTriggerTime > cooldownMs) {
+                        lastTriggerTime = now
+                        // إرسال الإشعار وتشغيل الإنذار المنضبط (لمدة 3.5 ثانية فقط)
+                        BaridiMobLaunchDetector(applicationContext).triggerBaridiMobSecurityAlert(true)
+                    }
                 }
+            } else {
+                // المستخدم خرج من التطبيق البنكي إلى تطبيق آخر
+                isInsideBankingApp = false
             }
         }
     }

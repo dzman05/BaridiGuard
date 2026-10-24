@@ -5,10 +5,12 @@ import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioTrack
-import android.media.MediaPlayer
+import android.media.Ringtone
 import android.media.RingtoneManager
 import android.media.ToneGenerator
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import kotlin.concurrent.thread
@@ -16,38 +18,58 @@ import kotlin.concurrent.thread
 /**
  * EmergencyAlarmPlayer
  * 
- * مشغل الإنذار الأمني الفائق (Triple-Redundancy Cyber Alarm).
- * يضمن إطلاق الصوت بأعلى شدة ممكنة (100% Volume) مهما كانت إعدادات هاتف المستخدم:
- * 1. ToneGenerator: صفارات الطوارئ من نظام أندرويد مباشرة (تخترق وضع الصامت).
- * 2. RingtoneManager / MediaPlayer: نغمة إنذار الهاتف الرسمية بأقصى مستوى.
- * 3. AudioTrack: مولّد الصفارة الرقمية ثنائية التردد (Cyber Siren Synthesizer).
- * 4. Vibrator: نمط اهتزاز استنفار قوي لشد انتباه الضحية.
+ * مشغل الإنذار الأمني الذكي (Smart Auto-Stopping Alarm).
+ * يضمن إطلاق إنذار قوي ومسموع لمدة محددة (3.5 ثوانٍ تلقائياً) ثم يتوقف فوراً،
+ * مع إمكانية الإيقاف اليدوي الفوري بنقرة واحدة (Stop Alarm).
  */
 object EmergencyAlarmPlayer {
 
-    fun playAudibleAlarm(context: Context, durationMs: Long = 3000) {
+    @Volatile
+    var isAlarmPlaying: Boolean = false
+        private set
+
+    private var activeRingtone: Ringtone? = null
+    private var activeToneGen: ToneGenerator? = null
+    private var activeAudioTrack: AudioTrack? = null
+    private var activeVibrator: Vibrator? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var autoStopRunnable: Runnable? = null
+
+    /**
+     * تشغيل الإنذار الأمني لمدة محددة (افتراضياً 3.5 ثانية) ثم التوقف التلقائي
+     */
+    @Synchronized
+    fun playAudibleAlarm(context: Context, durationMs: Long = 3500) {
+        // إيقاف أي صوت سابق أولاً
+        stopAlarm()
+
+        isAlarmPlaying = true
+
         thread(start = true, isDaemon = true) {
             try {
                 val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
-                // ضبط صوت المنبه على أقصى درجة في لحظة الخطر
+                // رفع مستوى الصوت لحالة الخطر
                 audioManager?.let { am ->
                     val maxVol = am.getStreamMaxVolume(AudioManager.STREAM_ALARM)
-                    am.setStreamVolume(AudioManager.STREAM_ALARM, maxVol, 0)
+                    val targetVol = (maxVol * 0.85).toInt().coerceAtLeast(1)
+                    am.setStreamVolume(AudioManager.STREAM_ALARM, targetVol, 0)
                 }
 
-                // 1. تشغيل ToneGenerator (الأضمن على الإطلاق ويعمل على كل هواتف أندرويد)
+                // 1. تشغيل ToneGenerator الرسمي للأجهزة
                 try {
-                    val toneGen = ToneGenerator(AudioManager.STREAM_ALARM, 100)
-                    toneGen.startTone(ToneGenerator.TONE_CDMA_EMERGENCY_RINGBACK, 1800)
+                    val toneGen = ToneGenerator(AudioManager.STREAM_ALARM, 90)
+                    activeToneGen = toneGen
+                    toneGen.startTone(ToneGenerator.TONE_CDMA_EMERGENCY_RINGBACK, durationMs.toInt())
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
 
-                // 2. تشغيل نغمة إنذار الهاتف الرسمية
+                // 2. تشغيل نغمة المنبه مع حفظ المرجع لإيقافها
                 try {
-                    val alertUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                        ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                    val alertUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                        ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
                     val ringtone = RingtoneManager.getRingtone(context, alertUri)
+                    activeRingtone = ringtone
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                         ringtone?.isLooping = false
                     }
@@ -56,77 +78,80 @@ object EmergencyAlarmPlayer {
                     e.printStackTrace()
                 }
 
-                // 3. هزاز الاستنفار القوي
+                // 3. هزاز متقطع لشد الانتباه
                 try {
                     val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+                    activeVibrator = vibrator
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         vibrator?.vibrate(
                             VibrationEffect.createWaveform(
-                                longArrayOf(0, 400, 200, 400, 200, 600),
+                                longArrayOf(0, 300, 200, 300, 200, 400),
                                 -1
                             )
                         )
                     } else {
                         @Suppress("DEPRECATION")
-                        vibrator?.vibrate(longArrayOf(0, 400, 200, 400, 200, 600), -1)
+                        vibrator?.vibrate(longArrayOf(0, 300, 200, 300, 200, 400), -1)
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
 
-                // 4. صفارة الترددات السيبرانية الحادة (Synthesized Cyber Siren)
-                playSynthesizedSiren()
+                // 4. جدولة الإيقاف التلقائي بعد انتهاء المدة (Auto-Stop Timer)
+                mainHandler.post {
+                    autoStopRunnable?.let { mainHandler.removeCallbacks(it) }
+                    autoStopRunnable = Runnable {
+                        stopAlarm()
+                    }
+                    mainHandler.postDelayed(autoStopRunnable!!, durationMs)
+                }
 
             } catch (e: Exception) {
                 e.printStackTrace()
+                stopAlarm()
             }
         }
     }
 
-    private fun playSynthesizedSiren() {
+    /**
+     * إيقاف الإنذار فوراً وإسكات كافة الأصوات والهزازات
+     */
+    @Synchronized
+    fun stopAlarm() {
         try {
-            val sampleRate = 44100
-            val durationMs = 1500
-            val minBuf = AudioTrack.getMinBufferSize(
-                sampleRate,
-                AudioFormat.CHANNEL_OUT_MONO,
-                AudioFormat.ENCODING_PCM_16BIT
-            )
-            val numSamples = (durationMs * sampleRate / 1000).toInt()
-            val totalSize = kotlin.math.max(numSamples, minBuf)
-            val buffer = ShortArray(totalSize)
+            autoStopRunnable?.let { mainHandler.removeCallbacks(it) }
+            autoStopRunnable = null
 
-            for (i in 0 until numSamples) {
-                val progress = i.toDouble() / numSamples
-                // موجة تصاعدية وتنازلية حادة بين 1100Hz و 1800Hz
-                val freq = 1100.0 + 700.0 * kotlin.math.sin(2.0 * Math.PI * progress * 8.0)
-                val angle = 2.0 * Math.PI * i * freq / sampleRate
-                buffer[i] = (kotlin.math.sin(angle) * Short.MAX_VALUE * 0.9).toInt().toShort()
+            // إيقاف النغمة
+            activeRingtone?.let {
+                if (it.isPlaying) {
+                    it.stop()
+                }
             }
+            activeRingtone = null
 
-            val track = AudioTrack.Builder()
-                .setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_ALARM)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                        .build()
-                )
-                .setAudioFormat(
-                    AudioFormat.Builder()
-                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                        .setSampleRate(sampleRate)
-                        .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-                        .build()
-                )
-                .setBufferSizeInBytes(buffer.size * 2)
-                .setTransferMode(AudioTrack.MODE_STATIC)
-                .build()
+            // إيقاف ToneGenerator
+            activeToneGen?.let {
+                it.stopTone()
+                it.release()
+            }
+            activeToneGen = null
 
-            track.write(buffer, 0, buffer.size)
-            track.setVolume(1.0f)
-            track.play()
+            // إيقاف AudioTrack
+            activeAudioTrack?.let {
+                it.stop()
+                it.release()
+            }
+            activeAudioTrack = null
+
+            // إيقاف الهزاز
+            activeVibrator?.cancel()
+            activeVibrator = null
+
+            isAlarmPlaying = false
         } catch (e: Exception) {
             e.printStackTrace()
+            isAlarmPlaying = false
         }
     }
 }
