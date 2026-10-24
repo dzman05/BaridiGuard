@@ -43,31 +43,37 @@ jobs:
       - name: Copy & Rename APK
         run: |
           mkdir -p release-output
-          cp android-app/app/build/outputs/apk/debug/app-debug.apk release-output/BaridiGuard-v1.2.4.apk
+          cp android-app/app/build/outputs/apk/debug/app-debug.apk release-output/BaridiGuard-v1.3.0.apk
 
       - name: Upload APK as Workflow Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: BaridiGuard-v1.2.4-APK
-          path: release-output/BaridiGuard-v1.2.4.apk
+          name: BaridiGuard-v1.3.0-APK
+          path: release-output/BaridiGuard-v1.3.0.apk
           retention-days: 30
 
       - name: Create GitHub Release with APK
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.2.4
-          name: "BaridiGuard v1.2.4 (Official Google Play BaridiMob ru.bpc.mobilebank.bpc Support)"
+          tag_name: v1.3.0
+          name: "BaridiGuard v1.3.0 (OTP Vault, One-Tap Shield Activator & Full Defense Suite)"
           body: |
-            ## 🛡️ BaridiGuard v1.2.4 - حارس بريدي (دعم حزمة بريدي موب الرسمية من متجر جوجل)
+            ## 🛡️ BaridiGuard v1.3.0 - حارس بريدي (الدرع الشامل، معالج التفعيل السريع وخزنة OTP)
             
-            ### ✨ الجديد في هذا التحديث (Nouveautés v1.2.4):
-            - 🎯 **دعم الحزمة الرسمية الحقيقية لتطبيق بريدي موب على جوجل بلاي (`ru.bpc.mobilebank.bpc`)**:
-              الآن يرصد حارس بريدي تطبيق بريدي موب المثبت من Play Store بدقة 100% ويطلق الإنذار فور تشغيله!
-            - 📱 **زر فتح بريدي موب المباشر (`ru.bpc.mobilebank.bpc`) للاختبار الفوري**:
-              يفتح تطبيق بريدي موب المثبت على جهازك مباشرة ليطلق صفارة الإنذار فورياً.
-            - 🚀 **تفعيل الحراسة الفورية في إمكانية الوصول (Accessibilité)**.
-            - 🛑 **إيقاف الإنذار التلقائي واليدوي وأيقونات FontAwesome**.
-          files: release-output/BaridiGuard-v1.2.4.apk
+            ### ✨ الجديد والأساسي في هذا الإصدار الشامل (Nouveautés v1.3.0):
+            - 📩 **خزنة الرسائل وأكواد التأكيد (OTP Vault) بأسبقية قصوى (Priority 999)**:
+              حفظ نسخة مشفرة ومستقلة لرسائل بريد الجزائر لمنع الفيروس من حذفها خفية، مع زر نسخ فوري واختبار المحاكاة.
+            - ⚡ **معالج التفعيل والتسطيب السريع (One-Tap Shield Activator 1-2-3-4)**:
+              إرشاد خطوة بخطوة لجميع المستخدمين لتفعيل الصلاحيات وحل مشكلة الإعدادات المقيدة والشفافة (Paramètres restreints في أندرويد 13/14).
+            - 🎯 **رصد وتشغيل تطبيق بريدي موب الرسمي من متجر جوجل (`ru.bpc.mobilebank.bpc`)**.
+            - 🛡️ **تفعيل دروع الحماية الـ 5 كاملة**:
+              1. رادار تشغيل بريدي موب
+              2. خزنة تأكيد الرسائل OTP ومنع حذفها
+              3. كاشف الشاشة السوداء والتراكب الخبيث ("يتم تحديث الهاتف...")
+              4. قاطع الإنترنت التلقائي (Kill-Switch)
+              5. درع الحماية الذاتية ومسؤول الجهاز (Anti-Kill Device Admin)
+            - 🛑 **إيقاف صفارة الإنذار التلقائي (3.5 ثوانٍ) واليدوي الفوري**.
+          files: release-output/BaridiGuard-v1.3.0.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

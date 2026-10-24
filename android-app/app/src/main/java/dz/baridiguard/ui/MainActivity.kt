@@ -1,12 +1,17 @@
 package dz.baridiguard.ui
 
+import android.app.admin.DevicePolicyManager
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
-import android.media.AudioAttributes
-import android.media.AudioFormat
-import android.media.AudioTrack
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.*
@@ -17,15 +22,17 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -58,7 +65,7 @@ class MainActivity : ComponentActivity() {
 
         // طلب إذن الإشعارات لأندرويد 13 فما فوق لضمان عمل الخدمة بدون انقطاع
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 101)
             }
         }
@@ -74,11 +81,60 @@ class MainActivity : ComponentActivity() {
                     phishingScanner = phishingScanner,
                     forensics = forensicReportGenerator,
                     baridiMobDetector = baridiMobDetector,
+                    hasSmsPermission = hasSmsPermission(),
+                    onRequestSmsPermission = { requestSmsPermission() },
+                    isDeviceAdminActive = isDeviceAdminActive(),
+                    onRequestDeviceAdmin = { requestDeviceAdmin() },
+                    onOpenAppDetails = { openAppDetailsSettings() },
                     onPlaySiren = { playPureCyberAlarmSiren() },
                     onCall1530 = { callAlgeriePosteEmergency() },
                     onLaunchBaridiMob = { launchBaridiMobApp() }
                 )
             }
+        }
+    }
+
+    fun hasSmsPermission(): Boolean {
+        return checkSelfPermission(android.Manifest.permission.RECEIVE_SMS) == PackageManager.PERMISSION_GRANTED
+    }
+
+    fun requestSmsPermission() {
+        requestPermissions(
+            arrayOf(
+                android.Manifest.permission.RECEIVE_SMS,
+                android.Manifest.permission.READ_SMS
+            ),
+            102
+        )
+    }
+
+    fun isDeviceAdminActive(): Boolean {
+        val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as? DevicePolicyManager ?: return false
+        val componentName = ComponentName(this, BaridiDeviceAdminReceiver::class.java)
+        return dpm.isAdminActive(componentName)
+    }
+
+    fun requestDeviceAdmin() {
+        val componentName = ComponentName(this, BaridiDeviceAdminReceiver::class.java)
+        val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
+            putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, componentName)
+            putExtra(
+                DevicePolicyManager.EXTRA_ADD_EXPLANATION,
+                "حماية BaridiGuard من الإيقاف القسري أو الإلغاء بواسطة الفيروسات والتروجانات أثناء الهجوم على بريدي موب."
+            )
+        }
+        startActivity(intent)
+    }
+
+    fun openAppDetailsSettings() {
+        try {
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.fromParts("package", packageName, null)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
@@ -110,9 +166,6 @@ class MainActivity : ComponentActivity() {
         startActivity(intent)
     }
 
-    /**
-     * تشغيل صوت إنذار سيبراني فائق متعدد القنوات (Triple-Redundancy Cyber Siren)
-     */
     fun playPureCyberAlarmSiren() {
         EmergencyAlarmPlayer.playAudibleAlarm(this)
     }
@@ -127,6 +180,11 @@ fun MainAppScreen(
     phishingScanner: PhishingScanner,
     forensics: ForensicReportGenerator,
     baridiMobDetector: BaridiMobLaunchDetector,
+    hasSmsPermission: Boolean,
+    onRequestSmsPermission: () -> Unit,
+    isDeviceAdminActive: Boolean,
+    onRequestDeviceAdmin: () -> Unit,
+    onOpenAppDetails: () -> Unit,
     onPlaySiren: () -> Unit,
     onCall1530: () -> Unit,
     onLaunchBaridiMob: () -> Unit
@@ -142,7 +200,6 @@ fun MainAppScreen(
     var generatedReportText by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
 
-    // Dynamic RTL / LTR layout direction
     val layoutDirection = if (isArabic) LayoutDirection.Rtl else LayoutDirection.Ltr
 
     CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
@@ -151,7 +208,6 @@ fun MainAppScreen(
                 TopAppBar(
                     title = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            // Official BaridiGuard Emblem Icon
                             Image(
                                 painter = painterResource(id = R.drawable.ic_launcher),
                                 contentDescription = "Logo",
@@ -170,7 +226,7 @@ fun MainAppScreen(
                                         color = EmeraldDark
                                     ) {
                                         Text(
-                                            "v1.2.4",
+                                            "v1.3.0",
                                             modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
                                             fontSize = 9.sp,
                                             fontWeight = FontWeight.Bold,
@@ -179,7 +235,7 @@ fun MainAppScreen(
                                     }
                                 }
                                 Text(
-                                    text = if (isArabic) "حارس بريدي • رادار الإنذار" else "Bouclier BaridiMob • v1.2.4",
+                                    text = if (isArabic) "حارس بريدي • الدرع الشامل" else "Bouclier BaridiMob • v1.3.0",
                                     fontSize = 10.5.sp,
                                     color = EmeraldLight
                                 )
@@ -187,7 +243,7 @@ fun MainAppScreen(
                         }
                     },
                     actions = {
-                        // Interactive In-App Language Switcher Button [ 🇩🇿 العربية | 🇫🇷 Français ]
+                        // Language Switcher
                         Surface(
                             shape = RoundedCornerShape(8.dp),
                             color = GuardCardDark,
@@ -205,7 +261,7 @@ fun MainAppScreen(
                             )
                         }
 
-                        // Emergency Button 1530 with FontAwesome Triangle Exclamation
+                        // Emergency 1530 Call
                         IconButton(onClick = { showEmergencyDialog = true }) {
                             Icon(
                                 painter = painterResource(id = R.drawable.fa_triangle_exclamation),
@@ -231,33 +287,46 @@ fun MainAppScreen(
                                 tint = if (selectedTab == 0) EmeraldLight else Color.Gray
                             ) 
                         },
-                        label = { Text(if (isArabic) "الرئيسية" else "Accueil", fontSize = 11.sp) }
+                        label = { Text(if (isArabic) "الرئيسية" else "Accueil", fontSize = 10.5.sp) }
                     )
                     NavigationBarItem(
                         selected = selectedTab == 1,
                         onClick = { selectedTab = 1 },
                         icon = { 
                             Icon(
-                                painter = painterResource(id = R.drawable.fa_magnifying_glass),
+                                painter = painterResource(id = R.drawable.fa_envelope),
                                 contentDescription = null,
                                 modifier = Modifier.size(20.dp),
                                 tint = if (selectedTab == 1) EmeraldLight else Color.Gray
                             ) 
                         },
-                        label = { Text(if (isArabic) "الروابط" else "Liens", fontSize = 11.sp) }
+                        label = { Text(if (isArabic) "خزنة OTP" else "Coffre OTP", fontSize = 10.5.sp) }
                     )
                     NavigationBarItem(
                         selected = selectedTab == 2,
                         onClick = { selectedTab = 2 },
                         icon = { 
                             Icon(
-                                painter = painterResource(id = R.drawable.fa_scale_balanced),
+                                painter = painterResource(id = R.drawable.fa_magnifying_glass),
                                 contentDescription = null,
                                 modifier = Modifier.size(20.dp),
                                 tint = if (selectedTab == 2) EmeraldLight else Color.Gray
                             ) 
                         },
-                        label = { Text(if (isArabic) "قضائي" else "Justice", fontSize = 11.sp) }
+                        label = { Text(if (isArabic) "الروابط" else "Liens", fontSize = 10.5.sp) }
+                    )
+                    NavigationBarItem(
+                        selected = selectedTab == 3,
+                        onClick = { selectedTab = 3 },
+                        icon = { 
+                            Icon(
+                                painter = painterResource(id = R.drawable.fa_scale_balanced),
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                                tint = if (selectedTab == 3) EmeraldLight else Color.Gray
+                            ) 
+                        },
+                        label = { Text(if (isArabic) "قضائي" else "Justice", fontSize = 10.5.sp) }
                     )
                 }
             },
@@ -272,6 +341,11 @@ fun MainAppScreen(
                         isAlarmPlaying = isAlarmPlaying,
                         isAccessibilityActive = baridiMobDetector.isAccessibilityServiceEnabled(),
                         hasUsagePermission = baridiMobDetector.hasUsageStatsPermission(),
+                        hasSmsPermission = hasSmsPermission,
+                        isDeviceAdminActive = isDeviceAdminActive,
+                        onRequestSmsPermission = onRequestSmsPermission,
+                        onRequestDeviceAdmin = onRequestDeviceAdmin,
+                        onOpenAppDetails = onOpenAppDetails,
                         onStartScan = {
                             coroutineScope.launch {
                                 isScanning = true
@@ -314,16 +388,18 @@ fun MainAppScreen(
                                 }
                             }
                         },
-                        onOpenUsageSettings = {
-                            baridiMobDetector.openUsageAccessSettings()
-                        },
                         onOpenAccessibility = {
                             baridiMobDetector.openAccessibilitySettings()
                         },
                         onLaunchBaridiMob = onLaunchBaridiMob
                     )
-                    1 -> PhishingScannerTab(isArabic, phishingScanner)
-                    2 -> ForensicsTab(
+                    1 -> OtpVaultTab(
+                        isArabic = isArabic,
+                        hasSmsPermission = hasSmsPermission,
+                        onRequestSmsPermission = onRequestSmsPermission
+                    )
+                    2 -> PhishingScannerTab(isArabic, phishingScanner)
+                    3 -> ForensicsTab(
                         isArabic = isArabic,
                         onGenerateReport = {
                             val sampleDossier = forensics.generateOfficialPoliceDossier(
@@ -428,25 +504,32 @@ fun DashboardTab(
     isAlarmPlaying: Boolean,
     isAccessibilityActive: Boolean,
     hasUsagePermission: Boolean,
+    hasSmsPermission: Boolean,
+    isDeviceAdminActive: Boolean,
+    onRequestSmsPermission: () -> Unit,
+    onRequestDeviceAdmin: () -> Unit,
+    onOpenAppDetails: () -> Unit,
     onStartScan: () -> Unit,
     onTriggerSiren: () -> Unit,
     onStopAlarm: () -> Unit,
     onTriggerKillSwitch: () -> Unit,
     onTestBaridiAlarm: () -> Unit,
-    onOpenUsageSettings: () -> Unit,
     onOpenAccessibility: () -> Unit,
     onLaunchBaridiMob: () -> Unit
 ) {
+    val scrollState = rememberScrollState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(scrollState)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Radar Circle with Official Vector Icon Inside
+        // Radar Circle with Official Emblem Inside
         Box(
             modifier = Modifier
-                .size(175.dp)
+                .size(160.dp)
                 .clip(CircleShape)
                 .background(GuardSurfaceDark)
                 .border(3.dp, EmeraldPrimary, CircleShape),
@@ -456,12 +539,12 @@ fun DashboardTab(
                 Image(
                     painter = painterResource(id = R.drawable.ic_launcher),
                     contentDescription = null,
-                    modifier = Modifier.size(54.dp)
+                    modifier = Modifier.size(50.dp)
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "$securityScore%",
-                    fontSize = 32.sp,
+                    fontSize = 30.sp,
                     fontWeight = FontWeight.Black,
                     color = EmeraldLight
                 )
@@ -471,13 +554,13 @@ fun DashboardTab(
                     } else {
                         if (isArabic) "الهاتف محمي 100%" else "Appareil 100% Sécurisé"
                     },
-                    fontSize = 10.5.sp,
+                    fontSize = 10.sp,
                     color = Color.LightGray
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(18.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
         // Big Scan Button
         Button(
@@ -485,7 +568,7 @@ fun DashboardTab(
             enabled = !isScanning,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp),
+                .height(46.dp),
             colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
             shape = RoundedCornerShape(12.dp)
         ) {
@@ -496,7 +579,7 @@ fun DashboardTab(
             )
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         // Big Prominent STOP ALARM Button when sound is active
         if (isAlarmPlaying) {
@@ -527,60 +610,7 @@ fun DashboardTab(
             Spacer(modifier = Modifier.height(10.dp))
         }
 
-        // Action Buttons: Siren & Network Kill Switch
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(
-                onClick = onTriggerSiren,
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = GuardCardDark),
-                border = androidx.compose.foundation.BorderStroke(1.dp, GoldAccent),
-                shape = RoundedCornerShape(10.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.fa_bell),
-                        contentDescription = null,
-                        tint = GoldLight,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = if (isArabic) "صفارة الإنذار" else "Sirène d'alarme",
-                        fontSize = 11.sp,
-                        color = GoldLight,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-
-            Button(
-                onClick = onTriggerKillSwitch,
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = DangerBg),
-                border = androidx.compose.foundation.BorderStroke(1.dp, DangerRed),
-                shape = RoundedCornerShape(10.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.fa_bolt),
-                        contentDescription = null,
-                        tint = DangerRed,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = if (isArabic) "قاطع الإنترنت" else "Coupe-circuit",
-                        fontSize = 11.sp,
-                        color = DangerRed,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // Action Buttons: Test Alarm & Launch BaridiMob
+        // Action Buttons: Test BaridiMob Alarm & Launch Official BaridiMob
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(
                 onClick = onTestBaridiAlarm,
@@ -633,84 +663,245 @@ fun DashboardTab(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Accessibility & Usage Permission Status Card
-        if (!isAccessibilityActive && !hasUsagePermission) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = DangerBg),
-                border = androidx.compose.foundation.BorderStroke(1.5.dp, GoldAccent),
-                shape = RoundedCornerShape(12.dp)
+        // Action Buttons: Manual Siren & Network Kill Switch
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(
+                onClick = onTriggerSiren,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(containerColor = GuardCardDark),
+                border = androidx.compose.foundation.BorderStroke(1.dp, GoldAccent),
+                shape = RoundedCornerShape(10.dp)
             ) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.fa_bell),
+                        contentDescription = null,
+                        tint = GoldLight,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = if (isArabic) "صفارة الإنذار" else "Sirène d'alarme",
+                        fontSize = 11.sp,
+                        color = GoldLight,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            Button(
+                onClick = onTriggerKillSwitch,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(containerColor = DangerBg),
+                border = androidx.compose.foundation.BorderStroke(1.dp, DangerRed),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.fa_bolt),
+                        contentDescription = null,
+                        tint = DangerRed,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = if (isArabic) "قاطع الإنترنت" else "Coupe-circuit",
+                        fontSize = 11.sp,
+                        color = DangerRed,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // ══════════════════════════════════════════════════════════════════
+        // 🚀 معالج التفعيل السريع للدروع (One-Tap Shield Activator 1-2-3-4)
+        // ══════════════════════════════════════════════════════════════════
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = GuardCardDark),
+            border = androidx.compose.foundation.BorderStroke(1.5.dp, GoldAccent),
+            shape = RoundedCornerShape(14.dp)
+        ) {
+            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.fa_shield_halved),
+                        contentDescription = null,
+                        tint = GoldAccent,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = if (isArabic) "⚡ معالج التفعيل والتسطيب السريع (Guide 1-2-3)" else "⚡ Guide d'Activation Rapide (1-2-3)",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        color = GoldLight
+                    )
+                }
+
+                Text(
+                    text = if (isArabic) {
+                        "لضمان أمان أموالك 100% ضد تروجان بريدي موب والشاشة السوداء وسرقة الـ OTP، يرجى تفعيل الصلاحيات التالية:"
+                    } else {
+                        "Pour garantir la protection totale de vos fonds contre le trojan BaridiMob et le vol d'OTP, activez les modules ci-dessous :"
+                    },
+                    fontSize = 10.5.sp,
+                    color = Color.LightGray
+                )
+
+                HorizontalDivider(color = GuardSurfaceDark, thickness = 1.dp)
+
+                // الخطوة 1: حل مشكلة الإعدادات المقيدة والشفافة (Paramètres restreints Android 13/14)
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.fa_triangle_exclamation),
-                            contentDescription = null,
-                            tint = GoldAccent,
-                            modifier = Modifier.size(22.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = if (isArabic) "⚠️ رادار بريدي موب غير مفعل بعد!" else "⚠️ Radar BaridiMob non activé !",
+                            text = if (isArabic) "1. 🔓 حل القفل الشفاف (Paramètres Restreints):" else "1. 🔓 Débloquer les paramètres restreints :",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 12.5.sp,
+                            fontSize = 11.5.sp,
                             color = Color.White
                         )
                     }
                     Text(
                         text = if (isArabic) {
-                            "لكي يستشعر الهاتف فتح تطبيق بريدي موب ويطلق الإنذار فوراً، يرجى تفعيل BaridiGuard في إمكانية الوصول (Accessibilité):"
+                            "إذا كان خيار إمكانية الوصول رمادياً ولا يفتح: اضغط الزر أدناه، ثم من القائمة العلوية (⋮) في الزاوية اختر: Autoriser les paramètres restreints."
                         } else {
-                            "Pour que le téléphone détecte l'ouverture de BaridiMob, activez le service BaridiGuard dans Accessibilité :"
+                            "Si l'option Accessibilité est grisée: cliquez ci-dessous, puis appuyez sur les 3 points (⋮) en haut à droite et choisissez 'Autoriser les paramètres restreints'."
                         },
-                        fontSize = 10.sp,
-                        color = Color.LightGray
+                        fontSize = 9.5.sp,
+                        color = Color.Gray
                     )
-                    Button(
-                        onClick = onOpenAccessibility,
-                        modifier = Modifier.fillMaxWidth().height(42.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = GoldAccent),
+                    OutlinedButton(
+                        onClick = onOpenAppDetails,
+                        modifier = Modifier.fillMaxWidth().height(38.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, GoldLight),
                         shape = RoundedCornerShape(8.dp)
                     ) {
                         Text(
-                            text = if (isArabic) "👉 اضغط هنا لتفعيل الحراسة (إمكانية الوصول)" else "👉 Activer dans Accessibilité",
-                            color = Color.Black,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 11.5.sp
+                            text = if (isArabic) "⚙️ فتح معلومات التطبيق (Infos sur l'application)" else "⚙️ Ouvrir Infos Application",
+                            fontSize = 10.5.sp,
+                            color = GoldLight,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
-            }
-        } else {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = GuardCardDark),
-                border = androidx.compose.foundation.BorderStroke(1.dp, EmeraldLight),
-                shape = RoundedCornerShape(10.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.fa_shield_halved),
-                        contentDescription = null,
-                        tint = EmeraldLight,
-                        modifier = Modifier.size(22.dp)
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Column {
+
+                HorizontalDivider(color = GuardSurfaceDark, thickness = 1.dp)
+
+                // الخطوة 2: رادار إمكانية الوصول لتطبيق بريدي موب
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
-                            text = if (isArabic) "✅ رادار بريدي موب نشط وجاهز 100%" else "✅ Radar BaridiMob actif & prêt",
+                            text = if (isArabic) "2. 🛡️ رادار بريدي موب (Accessibilité):" else "2. 🛡️ Radar BaridiMob (Accessibilité) :",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp,
-                            color = EmeraldLight
+                            fontSize = 11.5.sp,
+                            color = Color.White
                         )
                         Text(
-                            text = if (isArabic) "سيطلق صفارة الإنذار فوراً عند تشغيل تطبيق بريدي موب" else "L'alarme se déclenchera dès l'ouverture de BaridiMob",
-                            fontSize = 9.5.sp,
-                            color = Color.LightGray
+                            text = if (isAccessibilityActive) "✅ مفعل" else "❌ معطل",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isAccessibilityActive) EmeraldLight else DangerRed
                         )
+                    }
+                    if (!isAccessibilityActive) {
+                        Button(
+                            onClick = onOpenAccessibility,
+                            modifier = Modifier.fillMaxWidth().height(38.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(
+                                text = if (isArabic) "👉 تفعيل رادار الحراسة الآن (Accessibilité)" else "👉 Activer dans Accessibilité",
+                                color = Color.Black,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+                }
+
+                HorizontalDivider(color = GuardSurfaceDark, thickness = 1.dp)
+
+                // الخطوة 3: حماية رسائل OTP من السرقة والحذف
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (isArabic) "3. 📩 درع حفظ رسائل OTP (Anti-Suppression):" else "3. 📩 Coffre OTP (Anti-Suppression) :",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.5.sp,
+                            color = Color.White
+                        )
+                        Text(
+                            text = if (hasSmsPermission) "✅ مفعل" else "❌ معطل",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (hasSmsPermission) EmeraldLight else DangerRed
+                        )
+                    }
+                    if (!hasSmsPermission) {
+                        Button(
+                            onClick = onRequestSmsPermission,
+                            modifier = Modifier.fillMaxWidth().height(38.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = GoldAccent),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(
+                                text = if (isArabic) "📩 منح إذن حماية رسائل التأكيد (SMS OTP)" else "📩 Autoriser la protection SMS OTP",
+                                color = Color.Black,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+                }
+
+                HorizontalDivider(color = GuardSurfaceDark, thickness = 1.dp)
+
+                // الخطوة 4: الحماية الذاتية ضد الإغلاق والحذف (Device Admin)
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (isArabic) "4. 🔒 مناعة ضد الإلغاء والإيقاف (Anti-Kill):" else "4. 🔒 Immunité Anti-Désinstallation :",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.5.sp,
+                            color = Color.White
+                        )
+                        Text(
+                            text = if (isDeviceAdminActive) "✅ محصن" else "❌ غير محصن",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isDeviceAdminActive) EmeraldLight else DangerRed
+                        )
+                    }
+                    if (!isDeviceAdminActive) {
+                        OutlinedButton(
+                            onClick = onRequestDeviceAdmin,
+                            modifier = Modifier.fillMaxWidth().height(38.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, EmeraldLight),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(
+                                text = if (isArabic) "🛡️ تحصين التطبيق كمسؤول جهاز (Device Admin)" else "🛡️ Activer l'immunité Device Admin",
+                                color = EmeraldLight,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 10.5.sp
+                            )
+                        }
                     }
                 }
             }
@@ -718,7 +909,9 @@ fun DashboardTab(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // Defenses Card
+        // ══════════════════════════════════════════════════════════════════
+        // 🛡️ دروع الحماية الـ 5 الأساسية (Les 5 Piliers Fondamentaux)
+        // ══════════════════════════════════════════════════════════════════
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = GuardCardDark),
@@ -726,39 +919,40 @@ fun DashboardTab(
         ) {
             Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    text = if (isArabic) "حالة دروع الحماية النشطة" else "Boucliers de défense actifs",
+                    text = if (isArabic) "حالة دروع الأمان الأساسية الـ 5" else "Les 5 Boucliers Fondamentaux de Sécurité",
                     fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
                     color = Color.White
                 )
                 DefenseRow(
                     iconRes = R.drawable.fa_bell,
-                    title = if (isArabic) "رادار إنذار تشغيل بريدي موب" else "Alarme ouverture BaridiMob",
-                    subtitle = if (isArabic) "صفارة إنذار وتحذير فوري عند فتح التطبيق" else "Alerte sonore immédiate dès le lancement de BaridiMob",
-                    active = true
+                    title = if (isArabic) "1. رادار تشغيل بريدي موب الرسمي" else "1. Radar BaridiMob (ru.bpc.mobilebank.bpc)",
+                    subtitle = if (isArabic) "صفارة إنذار فورية عند فتح التطبيق من جوجل بلاي" else "Alerte sonore immédiate à l'ouverture de l'app",
+                    active = isAccessibilityActive
                 )
                 DefenseRow(
-                    iconRes = R.drawable.fa_shield_halved,
-                    title = if (isArabic) "درع تطبيق بريدي موب" else "Blindage BaridiMob",
-                    subtitle = if (isArabic) "حظر النقرات غير المرئية في الخلفية" else "Blocage des clics invisibles en arrière-plan",
-                    active = true
+                    iconRes = R.drawable.fa_envelope,
+                    title = if (isArabic) "2. خزنة تأكيد الرسائل (OTP Vault)" else "2. Coffre OTP & Anti-Suppression",
+                    subtitle = if (isArabic) "أسبقية قصوى (Priority 999) لحفظ كود التأكيد ومنع حذفه" else "Sauvegarde ultra-prioritaire anti-suppression malware",
+                    active = hasSmsPermission
                 )
                 DefenseRow(
                     iconRes = R.drawable.fa_lock,
-                    title = if (isArabic) "كاشف الشاشة السوداء" else "Détecteur d'écran noir",
-                    subtitle = if (isArabic) "منع شاشة التحديث المزيفة" else "Empêche l'écran factice de mise à jour",
+                    title = if (isArabic) "3. كاشف الشاشة السوداء والتراكب" else "3. Bloqueur d'écran noir & overlays",
+                    subtitle = if (isArabic) "منع شاشة التحديث المزيفة (جاري تحديث الهاتف...)" else "Empêche l'écran factice de mise à jour système",
                     active = true
                 )
                 DefenseRow(
                     iconRes = R.drawable.fa_wifi,
-                    title = if (isArabic) "قاطع الإنترنت التلقائي" else "Coupe-circuit réseau",
-                    subtitle = if (isArabic) "عزل الهاتف فوراً لقطع اتصال التروجان" else "Isolation réseau immédiate anti-trojan",
+                    title = if (isArabic) "4. قاطع الإنترنت التلقائي (Kill-Switch)" else "4. Coupe-circuit réseau instantané",
+                    subtitle = if (isArabic) "عزل فوري للشبكة وقطع اتصال التروجان بالخادم" else "Isolation réseau pour couper la communication trojan",
                     active = true
                 )
                 DefenseRow(
                     iconRes = R.drawable.fa_shield_virus,
-                    title = if (isArabic) "درع الحماية الذاتية (Anti-Kill)" else "Auto-défense (Anti-Kill)",
-                    subtitle = if (isArabic) "منع الفيروس من فرض الإيقاف أو الحذف" else "Immunité contre l'arrêt forcé par un malware",
-                    active = true
+                    title = if (isArabic) "5. درع الحماية الذاتية (Anti-Kill)" else "5. Auto-défense & Anti-Désinstallation",
+                    subtitle = if (isArabic) "منع الفيروس من فرض الإيقاف أو حذف التطبيق" else "Immunité contre la fermeture et suppression forcée",
+                    active = isDeviceAdminActive
                 )
             }
         }
@@ -784,21 +978,289 @@ fun DefenseRow(iconRes: Int, title: String, subtitle: String, active: Boolean) {
                 Icon(
                     painter = painterResource(id = iconRes),
                     contentDescription = null,
-                    tint = EmeraldLight,
+                    tint = if (active) EmeraldLight else Color.Gray,
                     modifier = Modifier.size(16.dp)
                 )
             }
             Spacer(modifier = Modifier.width(10.dp))
             Column {
-                Text(title, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color.White)
+                Text(title, fontWeight = FontWeight.Bold, fontSize = 11.5.sp, color = Color.White)
                 Text(subtitle, fontSize = 9.sp, color = Color.Gray)
             }
         }
         Switch(
             checked = active,
             onCheckedChange = null,
-            colors = SwitchDefaults.colors(checkedThumbColor = EmeraldLight, checkedTrackColor = EmeraldDark)
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = EmeraldLight,
+                checkedTrackColor = EmeraldDark,
+                uncheckedThumbColor = Color.DarkGray,
+                uncheckedTrackColor = GuardSurfaceDark
+            )
         )
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// 📩 خزنة OTP المشفرة (Coffre-Fort des Codes OTP)
+// ══════════════════════════════════════════════════════════════════════════
+@Composable
+fun OtpVaultTab(
+    isArabic: Boolean,
+    hasSmsPermission: Boolean,
+    onRequestSmsPermission: () -> Unit
+) {
+    val context = LocalContext.current
+    var otpList by remember { mutableStateOf(OtpVaultStorage.getAllOtps(context)) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = if (isArabic) "خزنة تأكيد الرسائل (OTP Vault)" else "Coffre-Fort des Codes OTP",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = Color.White
+                )
+                Text(
+                    text = if (isArabic) {
+                        "النسخة المستقلة المحصنة ضد الحذف الخفي بواسطة التروجان"
+                    } else {
+                        "Copie sécurisée immunisée contre la suppression discrète par les malwares"
+                    },
+                    fontSize = 10.5.sp,
+                    color = Color.Gray
+                )
+            }
+
+            // زر تحديث القائمة
+            IconButton(onClick = { otpList = OtpVaultStorage.getAllOtps(context) }) {
+                Icon(
+                    painter = painterResource(id = R.drawable.fa_envelope),
+                    contentDescription = "Refresh",
+                    tint = EmeraldLight,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // تنبيه في حال عدم منح إذن الرسائل
+        if (!hasSmsPermission) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = DangerBg),
+                border = androidx.compose.foundation.BorderStroke(1.dp, DangerRed),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = if (isArabic) "⚠️ إذن حماية الرسائل غير ممنوح!" else "⚠️ Permission SMS requise !",
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        fontSize = 12.sp
+                    )
+                    Text(
+                        text = if (isArabic) {
+                            "لكي يتمكن التطبيق من التقاط رمز الـ OTP بأسبقية 999 وحفظه قبل أن يحذفه الفيروس، يرجى منح الإذن:"
+                        } else {
+                            "Pour intercepter les SMS de confirmation avant leur suppression par le malware, accordez la permission :"
+                        },
+                        fontSize = 10.sp,
+                        color = Color.LightGray
+                    )
+                    Button(
+                        onClick = onRequestSmsPermission,
+                        colors = ButtonDefaults.buttonColors(containerColor = DangerRed),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth().height(36.dp)
+                    ) {
+                        Text(
+                            text = if (isArabic) "منح إذن الرسائل الآن (Autoriser SMS)" else "Autoriser l'accès SMS",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+        }
+
+        // زر تجربة محاكاة رسالة تأكيد وهمية للاختبار الفوري
+        OutlinedButton(
+            onClick = {
+                OtpVaultStorage.saveOtp(
+                    context,
+                    sender = "ALGERIE POSTE",
+                    otpCode = (100000..999999).random().toString(),
+                    fullBody = "ALGERIE POSTE: Votre code de confirmation pour virement BaridiMob est: ${(100000..999999).random()}. Ne le communiquez a personne."
+                )
+                otpList = OtpVaultStorage.getAllOtps(context)
+                Toast.makeText(context, if (isArabic) "تمت إضافة رسالة تجريبية للخزنة ✓" else "Code OTP test ajouté ✓", Toast.LENGTH_SHORT).show()
+            },
+            modifier = Modifier.fillMaxWidth().height(38.dp),
+            border = androidx.compose.foundation.BorderStroke(1.dp, EmeraldLight),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    painter = painterResource(id = R.drawable.fa_envelope),
+                    contentDescription = null,
+                    tint = EmeraldLight,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = if (isArabic) "🧪 تجربة حفظ رسالة OTP تجريبية" else "🧪 Tester l'enregistrement d'un OTP",
+                    fontSize = 10.5.sp,
+                    color = EmeraldLight,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        if (otpList.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.fa_lock),
+                        contentDescription = null,
+                        tint = Color.Gray,
+                        modifier = Modifier.size(42.dp)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = if (isArabic) "الخزنة فارغة حالياً" else "Aucun message intercepté",
+                        fontWeight = FontWeight.Bold,
+                        color = Color.LightGray,
+                        fontSize = 13.sp
+                    )
+                    Text(
+                        text = if (isArabic) {
+                            "بمجرد وصول أي رسالة OTP من بريد الجزائر، ستظهر نسختها المحمية هنا فوراً حتى لو حُذفت من هاتفك."
+                        } else {
+                            "Dès la réception d'un code OTP d'Algérie Poste, sa copie protégée apparaîtra ici."
+                        },
+                        color = Color.Gray,
+                        fontSize = 10.sp,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
+            }
+        } else {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                items(otpList) { record ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = GuardCardDark),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, EmeraldLight.copy(alpha = 0.5f)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = EmeraldDark
+                                    ) {
+                                        Text(
+                                            text = record.sender,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = EmeraldLight
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "✓ محمي ضد الحذف",
+                                        fontSize = 9.sp,
+                                        color = EmeraldLight
+                                    )
+                                }
+                                Text(
+                                    text = record.timestamp,
+                                    fontSize = 9.5.sp,
+                                    color = Color.Gray
+                                )
+                            }
+
+                            // عرض كود التأكيد بحجم كبير جداً مع زر النسخ
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(GuardSurfaceDark, RoundedCornerShape(8.dp))
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(
+                                        text = if (isArabic) "رمز التأكيد (Code OTP):" else "Code de confirmation :",
+                                        fontSize = 10.sp,
+                                        color = Color.LightGray
+                                    )
+                                    Text(
+                                        text = record.otpCode,
+                                        fontSize = 24.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = EmeraldLight,
+                                        letterSpacing = 2.sp
+                                    )
+                                }
+
+                                Button(
+                                    onClick = {
+                                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                        val clip = ClipData.newPlainText("OTP", record.otpCode)
+                                        clipboard.setPrimaryClip(clip)
+                                        Toast.makeText(context, if (isArabic) "تم نسخ الكود: ${record.otpCode}" else "Code copié !", Toast.LENGTH_SHORT).show()
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
+                                    shape = RoundedCornerShape(6.dp),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = if (isArabic) "نسخ الكود" else "Copier",
+                                        fontSize = 11.sp,
+                                        color = Color.Black,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+
+                            // نص الرسالة الأصلي الكامل
+                            Text(
+                                text = record.fullBody,
+                                fontSize = 10.5.sp,
+                                color = Color.White,
+                                lineHeight = 14.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -818,9 +1280,9 @@ fun PhishingScannerTab(isArabic: Boolean, scanner: PhishingScanner) {
             text = if (isArabic) {
                 "افحص أي رابط قبل فتحه للتأكد من أنه لا ينتحل بريدي موب أو بطاقة الذهبية:"
             } else {
-                "Vérifiez tout lien suspect avant de l'ouvrir pour protéger vos données Edahabia:"
+                "Vérifiez tout lien suspect avant de l'ouvrir pour protéger vos données Edahabia :"
             },
-            fontSize = 12.sp,
+            fontSize = 11.sp,
             color = Color.Gray
         )
 
@@ -942,9 +1404,9 @@ fun ForensicsTab(isArabic: Boolean, onGenerateReport: () -> Unit) {
             text = if (isArabic) {
                 "توليد ملف أدلة فني وقانوني موجه لفرقة مكافحة الجرائم المعلوماتية (الدرك الوطني / الأمن الوطني):"
             } else {
-                "Génération du dossier d'infraction cybercriminelle destiné aux services de Police et Gendarmerie:"
+                "Génération du dossier d'infraction cybercriminelle destiné aux services de Police et Gendarmerie :"
             },
-            fontSize = 12.sp,
+            fontSize = 11.5.sp,
             color = Color.Gray
         )
 
@@ -957,7 +1419,7 @@ fun ForensicsTab(isArabic: Boolean, onGenerateReport: () -> Unit) {
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = if (isArabic) "المستندات التي يولدها التقرير:" else "Éléments inclus dans le dossier:",
+                    text = if (isArabic) "المستندات التي يولدها التقرير:" else "Éléments inclus dans le dossier :",
                     fontWeight = FontWeight.Bold,
                     color = GoldLight
                 )
@@ -977,7 +1439,7 @@ fun ForensicsTab(isArabic: Boolean, onGenerateReport: () -> Unit) {
                     color = Color.LightGray
                 )
                 Text(
-                    text = if (isArabic) "• السند القانوني بالمواد 394 مكرر من قانون العقوبات" else "• Fondement: Articles 394 bis du Code Pénal",
+                    text = if (isArabic) "• السند القانوني بالمواد 394 مكرر من قانون العقوبات" else "• Fondement : Articles 394 bis du Code Pénal",
                     fontSize = 11.sp,
                     color = Color.LightGray
                 )

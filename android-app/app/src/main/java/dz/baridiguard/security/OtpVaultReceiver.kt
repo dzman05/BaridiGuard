@@ -77,17 +77,13 @@ class OtpVaultReceiver : BroadcastReceiver() {
     }
 
     private fun handleSecureOtp(context: Context, sender: String, otp: String, fullBody: String) {
-        // تشغيل صوت إنذار مرتفع لتنبيه المستخدم فوراً
-        try {
-            val alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-            val ringtone = RingtoneManager.getRingtone(context, alarmSound)
-            ringtone.play()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+        // 1. حفظ الرسالة المشفرة فوراً في الخزنة المستقلة المحصنة ضد الحذف
+        OtpVaultStorage.saveOtp(context, sender, otp, fullBody)
 
-        // إظهار إشعار فوري ذو أولوية قصوى
+        // 2. تشغيل صوت إنذار أمني قوي ومسموع لمدة 3.5 ثوانٍ
+        EmergencyAlarmPlayer.playAudibleAlarm(context, 3500)
+
+        // 3. إظهار إشعار فوري ذو أولوية قصوى
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra("EXTRA_OTP", otp)
@@ -102,7 +98,7 @@ class OtpVaultReceiver : BroadcastReceiver() {
         )
 
         val notification = NotificationCompat.Builder(context, BaridiGuardApp.CHANNEL_OTP_VAULT)
-            .setSmallIcon(android.R.drawable.ic_lock_lock)
+            .setSmallIcon(dz.baridiguard.R.drawable.ic_launcher)
             .setContentTitle("🛡️ رمز تأكيد محمي من بريد الجزائر: $otp")
             .setContentText("تم حفظ الرمز في خزنة BaridiGuard لمنع حذفه الخفي بواسطة التروجان!")
             .setStyle(NotificationCompat.BigTextStyle().bigText("المرسل: $sender\nرمز الـ OTP: $otp\n\nنص الرسالة:\n$fullBody\n\n⚠️ إذا لم تكن أنت من يجري المعاملة، اتصل بـ 1530 فوراً لتجميد الحساب!"))
