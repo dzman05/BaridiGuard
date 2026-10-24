@@ -46,7 +46,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -B debug-log
-          tail -n 80 build.log > build-summary.txt
+          grep -B 5 -A 25 "FAILURE:" build.log > build-summary.txt || tail -n 100 build.log > build-summary.txt
           git add build-summary.txt
           git commit -m "build log summary" || true
           git push -f origin debug-log || true
