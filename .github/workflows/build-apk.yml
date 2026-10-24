@@ -38,7 +38,7 @@ jobs:
       - name: Build Debug APK
         working-directory: ./android-app
         run: |
-          gradle assembleDebug --stacktrace
+          gradle assembleDebug --stacktrace > ../build.log 2>&1 || (echo "FAILED_BUILD" && tail -n 100 ../build.log && exit 1)
 
       - name: Copy & Rename APK
         run: |
@@ -62,15 +62,6 @@ jobs:
             ## 🛡️ BaridiGuard v1.0.0 - حارس بريدي
             
             تطبيق الحماية الاستباقية لتطبيق **BaridiMob** والبطاقة الذهبية في الجزائر.
-            
-            ### المميزات المضمنة في هذه النسخة:
-            - 🚫 **كاشف الشاشة السوداء المزيفة** ("يتم تحديث الهاتف")
-            - ⚡ **قاطع الإنترنت التلقائي (Kill-Switch)** لعزل الهاتف فور رصد هجوم
-            - 📩 **خزنة أكواد الـ OTP** لمنع الحذف التلقائي لرسائل بريد الجزائر
-            - 🛡️ **درع الحماية الذاتية (Anti-Kill)** ضد محاولات الفيروسات إلغاء التثبيت
-            - ⚖️ **مولد ملف الشكوى الجنائية** للدرك الوطني والشرطة
-            - 🔋 **Zero Battery Drain** بدون أي استهلاك للبطارية
-            - 🌐 واجهة ثنائية اللغة: **عربية وفرنسية**
           files: release-output/BaridiGuard-v1.0.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
