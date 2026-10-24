@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" id="htmlRoot">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BaridiGuard - حارس بريدي | درع الحماية المالية ومكافحة الاختراق</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            guard: {
+              950: '#070d19',
+              900: '#0b1528',
+              850: '#0f1f38',
+              800: '#162b4d',
+              emerald: '#10b981',
+              emeraldGlow: '#34d399',
+              gold: '#f59e0b',
+              goldLight: '#fbbf24',
+              danger: '#ef4444'
+            }
+          },
+          fontFamily: {
+            sans: ['Segoe UI', 'Tahoma', 'Cairo', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
+      50% { box-shadow: 0 0 30px rgba(16, 185, 129, 0.7); }
+    }
+    @keyframes radarSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .radar-beam {
+      animation: radarSpin 3.5s infinite linear;
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0b1528; }
+    ::-webkit-scrollbar-thumb { background: #162b4d; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #10b981; }
+  </style>
+</head>
+<body class="bg-guard-950 text-slate-100 min-h-screen font-sans selection:bg-guard-emerald selection:text-guard-950">
+
+  <!-- Top App Navigation Bar -->
+  <header class="border-b border-guard-800 bg-guard-900/90 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Logo Branding -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-guard-emerald to-guard-850 p-0.5 shadow-lg shadow-guard-emerald/20 flex items-center justify-center">
+          <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-extrabold text-xl tracking-tight text-white">BARIDI<span class="text-guard-emerald">GUARD</span></span>
+            <span class="bg-guard-emerald/10 text-guard-emerald text-xs px-2 py-0.5 rounded-full border border-guard-emerald/30 font-bold">Pro v1.2</span>
+          </div>
+          <p id="lblSubTitle" class="text-xs text-slate-400 hidden sm:block">نظام الحماية الاستباقية لتطبيقات الدفع ومكافحة تروجانات أندرويد</p>
+        </div>
+      </div>
+
+      <!-- Live Controls: Bilingual Switcher & Status -->
+      <div class="flex items-center gap-3">
+        
+        <!-- Language Switcher [ العربية | Français ] -->
+        <div class="flex items-center bg-guard-950 p-1 rounded-xl border border-guard-800 text-xs">
+          <button id="langArBtn" onclick="setLanguage('ar')" class="px-2.5 py-1 rounded-lg font-bold bg-guard-emerald text-guard-950 transition">
+            🇩🇿 العربية
+          </button>
+          <button id="langFrBtn" onclick="setLanguage('fr')" class="px-2.5 py-1 rounded-lg font-bold text-slate-400 hover:text-white transition">
+            🇫🇷 Français
+          </button>
+        </div>
+
+        <!-- Emergency Freeze Modal Trigger -->
+        <button onclick="openEmergencyModal()" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          <span id="lblEmergencyBtn">طوارئ 1530</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Main Presentation Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Hero Introduction Banner -->
+    <div class="bg-gradient-to-r from-guard-900 via-guard-850 to-guard-900 border border-guard-800 rounded-2xl p-6 mb-8 shadow-xl relative overflow-hidden">
+      <div class="absolute -left-10 -bottom-10 w-48 h-48 bg-guard-emerald/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -right-10 -top-10 w-48 h-48 bg-guard-gold/10 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="flex flex-col lg:flex-row items-center justify-between gap-6 relative z-10">
+        <div class="space-y-2 text-center lg:text-right" id="heroTextContainer">
+          <div class="inline-flex items-center gap-2 bg-guard-gold/10 border border-guard-gold/30 text-guard-gold text-xs px-3 py-1 rounded-full font-semibold">
+            <span id="lblHeroBadge">🛡️ النظام المتكامل لمكافحة قرصنة بريدي موب</span>
+            <span>•</span>
+            <span id="lblHeroSpec">قطع الإنترنت التلقائي + بلا استهلاك بطارية</span>
+          </div>
+          <h1 id="lblHeroTitle" class="text-2xl sm:text-3xl font-extrabold text-white">
+            حارس الحسابات البريدية <span class="text-guard-emerald">BaridiGuard</span>
+          </h1>
+          <p id="lblHeroDesc" class="text-slate-300 text-sm max-w-3xl leading-relaxed">
+            محرك حماية أندرويد متطور يعمل بأسلوب رد الفعل الفوري (Zero Battery Drain)، يتصدى لهجمات الشاشة السوداء، يقطع الإنترنت تلقائياً عند الخطر، ويولد ملفات شكوى رسمية للشرطة والدرك الوطني.
+          </p>
+        </div>
+
+        <!-- Mode Toggle (Mobile Simulator vs Desktop Grid) -->
+        <div class="flex items-center bg-guard-950 p-1 rounded-xl border border-guard-800">
+          <button id="viewMobileBtn" onclick="setViewMode('mobile')" class="px-4 py-2 rounded-lg text-xs font-bold transition bg-guard-emerald text-guard-950 shadow">
+            📱 <span id="lblViewMobile">الهاتف التفاعلي</span>
+          </button>
+          <button id="viewAuditBtn" onclick="setViewMode('specs')" class="px-4 py-2 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white">
+            📐 <span id="lblViewSpecs">المعمارية والهوية</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN VIEW CONTAINER -->
+    <div id="mobileSimulatorContainer" class="flex flex-col lg:flex-row gap-8 items-start justify-center">
+
+      <!-- LEFT SIDE: The Functional Mobile App Frame -->
+      <div class="w-full max-w-[400px] mx-auto bg-guard-900 border-4 border-guard-800 rounded-[48px] p-4 shadow-2xl shadow-guard-emerald/10 relative overflow-hidden">
+        
+        <!-- Phone Hardware Top Notch / Island -->
+        <div class="w-32 h-5 bg-guard-950 rounded-b-xl mx-auto mb-3 flex items-center justify-center gap-2">
+          <div class="w-2.5 h-2.5 rounded-full bg-guard-900 border border-guard-800"></div>
+          <div class="w-1.5 h-1.5 rounded-full bg-blue-500/50"></div>
+        </div>
+
+        <!-- Phone Top Bar (Battery, WiFi, Time) -->
+        <div class="flex justify-between items-center text-[11px] text-slate-400 px-3 mb-3">
+          <span class="font-bold text-white">15:30</span>
+          <div class="flex items-center gap-2">
+            <!-- Simulated Network Kill Switch Indicator -->
+            <div id="phoneNetworkStatus" class="flex items-center gap-1 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/30">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span id="lblNetStatus">4G+ WiFi متصل</span>
+            </div>
+            <span>99%</span>
+          </div>
+        </div>
+
+        <!-- IN-APP SCREEN CONTENT (DYNAMIC TAB CONTAINER) -->
+        <div class="bg-guard-950 rounded-[32px] border border-guard-800/80 p-4 min-h-[580px] flex flex-col justify-between relative overflow-hidden">
+          
+          <!-- TAB 1: SHIELD DASHBOARD (Default) -->
+          <div id="tabDashboard" class="space-y-3">
+            
+            <!-- App Header Inside Phone -->
+            <div class="flex items-center justify-between pb-2 border-b border-guard-850">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-guard-800 flex items-center justify-center text-guard-emerald font-bold">
+                  🛡️
+                </div>
+                <div>
+                  <h2 class="text-sm font-extrabold text-white" id="lblAppInsideTitle">حارس بريدي</h2>
+                  <p class="text-[10px] text-guard-emerald font-semibold" id="lblAppStatusText">● الحماية النشطة تعمل (بدون استهلاك بطارية)</p>
+                </div>
+              </div>
+              <span id="scoreBadge" class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs px-2.5 py-1 rounded-full font-bold">
+                98% آمن
+              </span>
+            </div>
+
+            <!-- Central Scanning Radar & Circle -->
+            <div class="relative py-2 flex flex-col items-center justify-center">
+              <div id="radarContainer" class="w-36 h-36 rounded-full border-2 border-dashed border-guard-emerald/30 flex items-center justify-center relative bg-guard-900/60 shadow-inner">
+                <div id="radarBeam" class="absolute inset-0 rounded-full border-t-2 border-guard-emerald/80 radar-beam pointer-events-none"></div>
+
+                <div class="w-22 h-22 p-4 rounded-full bg-gradient-to-br from-guard-900 to-guard-850 border border-guard-emerald/50 flex flex-col items-center justify-center shadow-lg relative z-10 text-center">
+                  <svg id="shieldIconCenter" class="w-8 h-8 text-guard-emerald mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                  </svg>
+                  <span id="scanProgressText" class="text-[10px] font-bold text-slate-300">الهاتف محمي</span>
+                </div>
+              </div>
+
+              <!-- Quick Security Scan Button -->
+              <button id="runScanBtn" onclick="startSecurityScan()" class="mt-3 w-full py-2.5 bg-gradient-to-r from-guard-emerald to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-guard-950 font-extrabold text-xs rounded-xl shadow-lg transition active:scale-95 flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <span id="lblRunScanText">فحص أمان تطبيقات الدفع الآن</span>
+              </button>
+            </div>
+
+            <!-- Real-time Defense Toggles (5 Defense Units) -->
+            <div class="space-y-1.5 text-xs">
+              
+              <!-- Toggle 1: BaridiMob Armor -->
+              <div class="bg-guard-900 border border-guard-800 rounded-xl p-2 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <div class="w-6 h-6 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold text-xs">💳</div>
+                  <div>
+                    <div class="font-bold text-white text-[10px]" id="tgl1Title">درع بريدي موب (BaridiMob Armor)</div>
+                    <div class="text-[8.5px] text-slate-400" id="tgl1Sub">حظر أي نقرات غير مرئية أثناء فتح التطبيق</div>
+                  </div>
+                </div>
+                <input type="checkbox" checked class="accent-guard-emerald w-3.5 h-3.5 cursor-pointer">
+              </div>
+
+              <!-- Toggle 2: Anti-Blackscreen Overlay -->
+              <div class="bg-guard-900 border border-guard-800 rounded-xl p-2 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <div class="w-6 h-6 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center font-bold text-xs">🖥️</div>
+                  <div>
+                    <div class="font-bold text-white text-[10px]" id="tgl2Title">كاشف الشاشة السوداء المزيفة</div>
+                    <div class="text-[8.5px] text-slate-400" id="tgl2Sub">منع رسالة "يتم تحديث الهاتف" الخادعة</div>
+                  </div>
+                </div>
+                <input type="checkbox" checked class="accent-guard-emerald w-3.5 h-3.5 cursor-pointer">
+              </div>
+
+              <!-- Toggle 3: Auto Network Kill-Switch -->
+              <div class="bg-guard-900 border border-guard-800 rounded-xl p-2 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <div class="w-6 h-6 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold text-xs">⚡</div>
+                  <div>
+                    <div class="font-bold text-white text-[10px]" id="tgl3Title">قاطع الإنترنت التلقائي عند الخطر</div>
+                    <div class="text-[8.5px] text-slate-400" id="tgl3Sub">عزل الهاتف فورا لقطع الاتصال بخادم المخترق</div>
+                  </div>
+                </div>
+                <input type="checkbox" checked class="accent-guard-emerald w-3.5 h-3.5 cursor-pointer">
+              </div>
+
+              <!-- Toggle 4: OTP Vault & SMS Keeper -->
+              <div class="bg-guard-900 border border-guard-800 rounded-xl p-2 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <div class="w-6 h-6 rounded-lg bg-emerald-500/10 text-guard-emerald flex items-center justify-center font-bold text-xs">📩</div>
+                  <div>
+                    <div class="font-bold text-white text-[10px]" id="tgl4Title">حارس أكواد الـ OTP من الحذف</div>
+                    <div class="text-[8.5px] text-slate-400" id="tgl4Sub">إنذار صوتي حاد وحفظ الكود قبل مسحه</div>
+                  </div>
+                </div>
+                <input type="checkbox" checked class="accent-guard-emerald w-3.5 h-3.5 cursor-pointer">
+              </div>
+
+              <!-- Toggle 5: Anti-Kill Shield -->
+              <div class="bg-guard-900 border border-guard-800 rounded-xl p-2 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <div class="w-6 h-6 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center font-bold text-xs">🛡️</div>
+                  <div>
+                    <div class="font-bold text-white text-[10px]" id="tgl5Title">درع الحماية الذاتية (Anti-Kill)</div>
+                    <div class="text-[8.5px] text-slate-400" id="tgl5Sub">منع الفيروس من فرض الإيقاف أو الحذف</div>
+                  </div>
+                </div>
+                <input type="checkbox" checked class="accent-guard-emerald w-3.5 h-3.5 cursor-pointer">
+              </div>
+            </div>
+
+          </div>
+
+          <!-- TAB 2: PHISHING LINKS SCANNER (NEW) -->
+          <div id="tabPhishing" class="space-y-3 hidden">
+            <div class="flex justify-between items-center pb-2 border-b border-guard-850">
+              <h3 class="text-xs font-bold text-white" id="lblPhishTitle">درع روابط الاحتيال (Anti-Phishing)</h3>
+              <span class="text-[10px] bg-guard-emerald/10 text-guard-emerald px-2 py-0.5 rounded-full font-bold">مُحدث 2026</span>
+            </div>
+
+            <p class="text-[10px] text-slate-400" id="lblPhishDesc">افحص أي رابط مرسل في SMS أو فيسبوك للتأكد من عدم سرقة بطاقتك الذهبية:</p>
+
+            <div class="space-y-2">
+              <input type="text" id="phishInputUrl" value="https://baridimob-update-algerie.cc" class="w-full bg-guard-900 border border-guard-800 rounded-xl p-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-guard-emerald" dir="ltr">
+              
+              <button onclick="checkPhishingLink()" class="w-full py-2 bg-guard-emerald text-guard-950 font-bold text-xs rounded-xl shadow transition active:scale-95">
+                <span id="lblPhishBtn">فحص أمان الرابط الآن</span>
+              </button>
+            </div>
+
+            <!-- Phishing Quick Test Chips -->
+            <div class="space-y-1">
+              <span class="text-[9px] text-slate-400" id="lblPhishSamples">روابط اختبار سريعة:</span>
+              <div class="flex flex-wrap gap-1 text-[9px]">
+                <button onclick="setPhishTest('https://baridimob-update-algerie.cc')" class="px-2 py-1 rounded bg-red-950/40 text-red-300 border border-red-500/30">انتحال بريدي موب ⚠️</button>
+                <button onclick="setPhishTest('https://minha-chomage-dz.info')" class="px-2 py-1 rounded bg-amber-950/40 text-amber-300 border border-amber-500/30">منحة بطالة وهمية ⚠️</button>
+                <button onclick="setPhishTest('https://baridinet.poste.dz')" class="px-2 py-1 rounded bg-emerald-950/40 text-emerald-300 border border-emerald-500/30">بريد الجزائر الرسمي ✓</button>
+              </div>
+            </div>
+
+            <!-- Phishing Scan Output Box -->
+            <div id="phishResultBox" class="bg-red-950/40 border border-red-500/50 rounded-xl p-3 space-y-1 text-xs">
+              <div class="font-bold text-red-400 flex items-center gap-1.5" id="lblPhishResultTitle">
+                <span>🚨 تحذير: رابط احتيال مؤكد!</span>
+              </div>
+              <p class="text-[10px] text-slate-300" id="lblPhishResultReason">
+                ينتحل اسم بريدي موب لسرقة بيانات بطاقة الدفع الذهبية. تم حظر فتحه!
+              </p>
+            </div>
+          </div>
+
+          <!-- TAB 3: CYBERCRIME FORENSIC DOSSIER (POLICE REPORT - NEW) -->
+          <div id="tabForensics" class="space-y-3 hidden">
+            <div class="flex justify-between items-center pb-2 border-b border-guard-850">
+              <h3 class="text-xs font-bold text-white" id="lblForensicTitle">ملف الشكوى الجنائية (الدرك / الشرطة)</h3>
+              <span class="text-[10px] bg-guard-gold/10 text-guard-gold px-2 py-0.5 rounded-full font-bold">مادة 394 مكرر</span>
+            </div>
+
+            <p class="text-[10px] text-slate-300" id="lblForensicDesc">
+              في حال تعرضت للسرقة، يولد التطبيق تقريراً فنياً جاهزاً لتقديمه لفرقة مكافحة الجرائم السيبيريانية:
+            </p>
+
+            <div class="bg-guard-900 border border-guard-800 p-2.5 rounded-xl text-[10px] space-y-1 text-slate-300">
+              <div class="font-bold text-guard-gold">📋 الأدلة المرفقة بالملف:</div>
+              <div>• اسم وبصمة التروجان (SHA-256): <span class="font-mono text-emerald-300">CinemaFlix APK</span></div>
+              <div>• حساب RIP المستقبل للتحويلات: <span class="font-mono text-emerald-300">00799999000987654321</span></div>
+              <div>• توقيت الشاشة السوداء واعتراض الـ SMS بالثانية</div>
+            </div>
+
+            <button onclick="openForensicReportModal()" class="w-full py-2 bg-gradient-to-r from-guard-gold to-amber-500 text-guard-950 font-extrabold text-xs rounded-xl shadow transition active:scale-95 flex items-center justify-center gap-1.5">
+              <span>📄</span>
+              <span id="lblForensicBtn">معاينة واستخراج التقرير الجنائي</span>
+            </button>
+          </div>
+
+          <!-- TAB 4: LIVE SIMULATOR -->
+          <div id="tabSimulator" class="space-y-3 hidden">
+            <div class="flex justify-between items-center pb-2 border-b border-guard-850">
+              <h3 class="text-xs font-bold text-white" id="lblSimTitle">محاكي الهجوم واختبار الدفاع</h3>
+              <span class="text-[10px] bg-red-500/10 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-full font-bold">اختبار عملي</span>
+            </div>
+
+            <div class="bg-guard-900 border border-guard-800 p-3 rounded-xl space-y-2 text-center">
+              <div class="w-10 h-10 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center mx-auto text-lg">
+                ⚠️
+              </div>
+              <div class="font-bold text-xs text-white" id="lblSimActionTitle">محاكاة هجوم الشاشة السوداء والـ OTP</div>
+              <p class="text-[9.5px] text-slate-400" id="lblSimActionDesc">
+                سيتم تشغيل الشاشة السوداء المزيفة واختبار صفارات الإنذار وقطع الإنترنت الفوري.
+              </p>
+
+              <button onclick="triggerSimulatedAttack()" class="w-full py-2 bg-gradient-to-r from-red-500 to-amber-600 hover:from-red-600 hover:to-amber-700 text-white font-extrabold text-xs rounded-xl shadow-lg transition active:scale-95">
+                ⚡ <span id="lblSimBtn">تشغيل سيناريو الهجوم الآن</span>
+              </button>
+            </div>
+
+            <!-- Live Logs Window inside Phone -->
+            <div class="bg-black/80 rounded-xl p-2.5 font-mono text-[8.5px] text-slate-300 space-y-1 h-32 overflow-y-auto border border-guard-800" id="simLogs">
+              <div class="text-guard-emerald">> [DAEMON] Zero Battery Drain Mode: Listening on System Events.</div>
+              <div class="text-slate-400">> [NET] Kill-Switch Armed. Ready for threats.</div>
+            </div>
+          </div>
+
+          <!-- Phone Bottom Navigation Bar (4 Tabs) -->
+          <div class="mt-2 pt-2 border-t border-guard-850 flex justify-around text-center">
+            <button onclick="switchTab('tabDashboard', this)" class="nav-btn text-guard-emerald flex flex-col items-center gap-0.5 text-[9.5px] font-bold">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+              </svg>
+              <span id="navHome">الرئيسية</span>
+            </button>
+
+            <button onclick="switchTab('tabPhishing', this)" class="nav-btn text-slate-400 hover:text-white flex flex-col items-center gap-0.5 text-[9.5px] font-bold">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+              </svg>
+              <span id="navPhishing">الروابط</span>
+            </button>
+
+            <button onclick="switchTab('tabForensics', this)" class="nav-btn text-slate-400 hover:text-white flex flex-col items-center gap-0.5 text-[9.5px] font-bold">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              <span id="navForensics">قضائي</span>
+            </button>
+
+            <button onclick="switchTab('tabSimulator', this)" class="nav-btn text-slate-400 hover:text-white flex flex-col items-center gap-0.5 text-[9.5px] font-bold">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+              </svg>
+              <span id="navSim">المحاكي</span>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Phone Hardware Bottom Indicator -->
+        <div class="w-28 h-1 bg-slate-600 rounded-full mx-auto mt-3"></div>
+
+      </div>
+
+      <!-- RIGHT SIDE: Real-time Interactive Control Panel -->
+      <div class="w-full lg:flex-1 space-y-6">
+
+        <!-- Card 1: Features & Technical Explanations -->
+        <div class="bg-guard-900 border border-guard-800 rounded-2xl p-6 shadow-xl space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-base font-bold text-white flex items-center gap-2">
+              <span class="text-guard-emerald">⚡</span>
+              <span id="lblFeaturesHeader">الميزات الاحترافية الجديدة المنفذة (Nouvelles fonctionnalités)</span>
+            </h2>
+            <span class="text-xs bg-guard-emerald/10 text-guard-emerald px-2.5 py-1 rounded-full font-bold border border-guard-emerald/20">
+              Zero Battery Drain
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+            
+            <div class="bg-guard-950 p-3.5 rounded-xl border border-guard-800 space-y-1.5">
+              <div class="text-lg">🔊</div>
+              <div class="font-bold text-white" id="f1Title">سيرينة إنذار سيبرانية خالصة</div>
+              <p class="text-slate-400 text-[11px] leading-relaxed" id="f1Desc">
+                ترددات ثنائية حادة (Pure Multi-Tone Siren) بدون أي صوت بشري لإيقاظ الضحية فوراً.
+              </p>
+            </div>
+
+            <div class="bg-guard-950 p-3.5 rounded-xl border border-guard-800 space-y-1.5">
+              <div class="text-lg">⚡</div>
+              <div class="font-bold text-white" id="f2Title">قاطع الإنترنت (Kill-Switch)</div>
+              <p class="text-slate-400 text-[11px] leading-relaxed" id="f2Desc">
+                عزل فوري للواي فاي وبيانات الهاتف لقطع اتصال المخترق قبل تحويل سنتيم واحد.
+              </p>
+            </div>
+
+            <div class="bg-guard-950 p-3.5 rounded-xl border border-guard-800 space-y-1.5">
+              <div class="text-lg">⚖️</div>
+              <div class="font-bold text-white" id="f3Title">ملف الشكوى الجنائية</div>
+              <p class="text-slate-400 text-[11px] leading-relaxed" id="f3Desc">
+                توليد ملف أدلة رقمي وبصمة الـ APK لتقديمه لفرقة مكافحة الجرائم المعلوماتية.
+              </p>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Card 2: Interactive Controls to Test with the Mobile Simulator -->
+        <div class="bg-gradient-to-br from-guard-900 to-guard-850 border border-guard-800 rounded-2xl p-6 shadow-xl space-y-4">
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <span>🎮</span>
+            <span id="lblTestControlsHeader">أزرار التجربة التفاعلية الحية</span>
+          </h2>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            
+            <button onclick="testPureSiren()" class="p-3 bg-guard-950 hover:bg-guard-800 border border-guard-gold/30 text-white rounded-xl text-right transition flex items-center justify-between group">
+              <div>
+                <div class="font-bold text-guard-gold">1. تشغيل صفارة الإنذار (Cyber Siren)</div>
+                <div class="text-[10px] text-slate-400">صوت صفارة إلكترونية نقية بلا صوت بشري</div>
+              </div>
+              <span class="text-guard-gold">🔊</span>
+            </button>
+
+            <button onclick="testNetworkKillSwitch()" class="p-3 bg-guard-950 hover:bg-guard-800 border border-blue-500/30 text-white rounded-xl text-right transition flex items-center justify-between group">
+              <div>
+                <div class="font-bold text-blue-400">2. تجربة قاطع الإنترنت (Kill-Switch)</div>
+                <div class="text-[10px] text-slate-400">عزل شبكة الهاتف وقطع الـ WiFi فوراً</div>
+              </div>
+              <span class="text-blue-400">⚡</span>
+            </button>
+
+            <button onclick="switchTab('tabPhishing', document.querySelectorAll('.nav-btn')[1])" class="p-3 bg-guard-950 hover:bg-guard-800 border border-guard-emerald/30 text-white rounded-xl text-right transition flex items-center justify-between group">
+              <div>
+                <div class="font-bold text-guard-emerald">3. تجربة فاحص روابط الاحتيال</div>
+                <div class="text-[10px] text-slate-400">كشف المواقع المنتحلة لبريدي موب</div>
+              </div>
+              <span class="text-guard-emerald">➔</span>
+            </button>
+
+            <button onclick="openForensicReportModal()" class="p-3 bg-guard-950 hover:bg-guard-800 border border-amber-500/30 text-white rounded-xl text-right transition flex items-center justify-between group">
+              <div>
+                <div class="font-bold text-amber-400">4. استخراج ملف الشكوى الجنائية</div>
+                <div class="text-[10px] text-slate-400">ملف جاهز للدرك الوطني والشرطة</div>
+              </div>
+              <span class="text-amber-400">📄</span>
+            </button>
+
+            <button onclick="triggerSimulatedAttack()" class="p-3 bg-guard-950 hover:bg-guard-800 border border-red-500/40 text-white rounded-xl text-right transition flex items-center justify-between group sm:col-span-2">
+              <div>
+                <div class="font-bold text-red-400 flex items-center gap-1.5">
+                  <span>🚨 5. محاكاة الهجوم الشامل (شاشة سوداء + صفارة + قطع إنترنت)</span>
+                </div>
+                <div class="text-[10px] text-slate-400">اختبار تصدي منظومة BaridiGuard في اللحظة الصفرية</div>
+              </div>
+              <span class="text-red-400">⚡</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- SPECIFICATIONS & BRANDING VIEW (Hidden when Mobile is active, shown via toggle) -->
+    <div id="specsContainer" class="hidden space-y-8">
+      <div class="bg-guard-900 border border-guard-800 rounded-2xl p-8 shadow-xl space-y-6">
+        <div class="flex justify-between items-center border-b border-guard-800 pb-4">
+          <div>
+            <h2 class="text-xl font-extrabold text-white">الهوية والشعار الرسمي (Identité Visuelle)</h2>
+            <p class="text-xs text-slate-400">أصول الفيكتور SVG الرسمية باللغتين العربية والفرنسية</p>
+          </div>
+          <div class="flex gap-2">
+            <a href="app-icon.svg" download="BaridiGuard-Icon.svg" class="px-3 py-1.5 bg-guard-emerald text-guard-950 font-bold text-xs rounded-lg transition hover:bg-guard-emeraldGlow">
+              Télécharger Icon SVG
+            </a>
+            <a href="logo.svg" download="BaridiGuard-Logo.svg" class="px-3 py-1.5 bg-guard-800 text-white font-bold text-xs rounded-lg transition hover:bg-guard-700 border border-guard-700">
+              Télécharger Logo SVG
+            </a>
+          </div>
+        </div>
+
+        <div class="bg-guard-950 p-6 rounded-2xl border border-guard-800 flex items-center justify-center">
+          <img src="logo.svg" alt="BaridiGuard Full Logo" class="max-w-xl w-full h-auto">
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Emergency 1530 Modal -->
+  <div id="emergencyModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-guard-900 border-2 border-red-500 rounded-3xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl">
+      <div class="w-16 h-16 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center mx-auto text-3xl animate-bounce">
+        🚨
+      </div>
+      <h3 class="text-xl font-extrabold text-white" id="modalEmergTitle">إجراء الطوارئ لتجميد الحساب فوراً</h3>
+      <p class="text-xs text-slate-300 leading-relaxed" id="modalEmergDesc">
+        إذا ظهرت شاشة سوداء على هاتفك أو اشتبهت في تحويل مالي مشبوه، اتصل فوراً بـ 1530 لغلق بريدي موب وتجميد البطاقة، مع قطع الإنترنت فوراً.
+      </p>
+
+      <div class="flex gap-3">
+        <a href="tel:1530" class="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow-lg shadow-red-600/30">
+          <span>📞 الاتصال بـ 1530 فوراً</span>
+        </a>
+        <button onclick="closeEmergencyModal()" class="px-5 py-3 bg-guard-800 hover:bg-guard-700 text-white font-bold text-xs rounded-xl transition">
+          إغلاق
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Simulated Black Screen Attack Overlay -->
+  <div id="simulatedBlackScreen" class="fixed inset-0 bg-black z-[100] flex flex-col items-center justify-center text-center p-6 hidden">
+    <div class="w-20 h-20 border-4 border-slate-700 border-t-white rounded-full animate-spin mb-6"></div>
+    <h2 class="text-2xl font-bold text-white mb-2" id="lblSimBlackTitle">يتم تحديث الهاتف...</h2>
+    <p class="text-slate-400 text-sm max-w-sm mb-6" id="lblSimBlackDesc">يرجى الانتظار، لا تقم بإيقاف تشغيل الهاتف (10 دقائق متبقية)</p>
+    
+    <div id="baridiInterceptionAlert" class="bg-guard-900 border-2 border-guard-emerald rounded-2xl p-5 max-w-md w-full shadow-2xl text-right space-y-3 hidden transition-all duration-500 scale-95 opacity-0">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-guard-emerald/20 text-guard-emerald flex items-center justify-center font-bold text-xl">
+          🛡️
+        </div>
+        <div>
+          <h3 class="text-sm font-extrabold text-white" id="lblInterceptTitle">تم اعتراض هجوم التروجان بنجاح!</h3>
+          <p class="text-[10px] text-guard-emerald font-semibold" id="lblInterceptSub">حارس بريدي (BaridiGuard) أحبط الهجوم وقطع الإنترنت</p>
+        </div>
+      </div>
+      <div class="text-xs text-slate-300 bg-guard-950 p-3 rounded-lg border border-guard-800" id="lblInterceptBody">
+        حاول تطبيق <strong class="text-red-400">CinemaFlix Pro</strong> حجب الشاشة باللون الأسود وفتح تطبيق بريدي موب. تم إطلاق صفارة الإنذار، قطع الإنترنت تلقائياً عبر Kill-Switch، وتأمين رصيدك!
+      </div>
+      <button onclick="dismissAttackSimulation()" class="w-full py-2.5 bg-guard-emerald text-guard-950 font-extrabold text-xs rounded-xl shadow-lg hover:bg-guard-emeraldGlow transition" id="lblInterceptDismiss">
+        إغلاق الشاشة واستعادة السيطرة على الهاتف ✓
+      </button>
+    </div>
+  </div>
+
+  <!-- Official Police Cybercrime Dossier Modal (Section 3) -->
+  <div id="forensicModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-guard-900 border-2 border-guard-gold rounded-3xl max-w-2xl w-full p-6 text-right space-y-4 shadow-2xl max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between border-b border-guard-800 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">⚖️</span>
+          <div>
+            <h3 class="text-base font-extrabold text-white">ملف الشكوى الجنائية والأدلة الرقمية</h3>
+            <p class="text-[11px] text-guard-gold">موجه إلى: فرقة مكافحة الجرائم المعلوماتية (الدرك الوطني / الأمن الوطني)</p>
+          </div>
+        </div>
+        <button onclick="closeForensicReportModal()" class="text-slate-400 hover:text-white text-lg font-bold px-2">✕</button>
+      </div>
+
+      <div class="bg-black/80 rounded-xl p-4 font-mono text-xs text-slate-300 overflow-y-auto flex-1 border border-guard-800 space-y-2 leading-relaxed" id="forensicReportContent" dir="ltr">
+        <!-- Content injected dynamically -->
+      </div>
+
+      <div class="flex gap-3 pt-2">
+        <button onclick="copyForensicDossier()" class="flex-1 py-2.5 bg-guard-gold text-guard-950 font-extrabold text-xs rounded-xl shadow hover:bg-guard-goldLight transition flex items-center justify-center gap-1.5">
+          <span>📋 نسخ نص التقرير بالكامل</span>
+        </button>
+        <button onclick="closeForensicReportModal()" class="px-5 py-2.5 bg-guard-850 hover:bg-guard-800 text-white font-bold text-xs rounded-xl transition">
+          إغلاق
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dynamic Logic: Audio Synth, Bilingual Dictionary & State -->
+  <script>
+    // Web Audio Synthesizer: PURE MULTI-TONE CYBER ALARM SIREN (NO HUMAN VOICE)
+    let audioCtx = null;
+    function getAudioContext() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    // Pure Multi-Tone Alternating Siren (850Hz <-> 1500Hz with Sawtooth harmonics)
+    function playPureCyberSiren(durationSec = 2.0) {
+      try {
+        const ctx = getAudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sawtooth';
+        
+        // Dynamic frequency modulation (Siren Sweep)
+        const now = ctx.currentTime;
+        osc.frequency.setValueAtTime(850, now);
+        for (let t = 0; t < durationSec; t += 0.3) {
+          osc.frequency.linearRampToValueAtTime(1450, now + t + 0.15);
+          osc.frequency.linearRampToValueAtTime(850, now + t + 0.3);
+        }
+
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + durationSec);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + durationSec);
+      } catch (e) { console.error(e); }
+    }
+
+    function playBeep(freq = 880, duration = 0.1) {
+      try {
+        const ctx = getAudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.12, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+      } catch(e) {}
+    }
+
+    function playSuccessChime() {
+      playBeep(523.25, 0.1);
+      setTimeout(() => playBeep(659.25, 0.1), 100);
+      setTimeout(() => playBeep(783.99, 0.25), 200);
+    }
+
+    // Bilingual Dictionary
+    let currentLang = 'ar';
+    const i18n = {
+      ar: {
+        dir: 'rtl',
+        subTitle: 'نظام الحماية الاستباقية لتطبيقات الدفع ومكافحة تروجانات أندرويد',
+        emergencyBtn: 'طوارئ 1530',
+        heroBadge: '🛡️ النظام المتكامل لمكافحة قرصنة بريدي موب',
+        heroSpec: 'قطع الإنترنت التلقائي + بلا استهلاك بطارية',
+        heroTitle: 'حارس الحسابات البريدية BaridiGuard',
+        heroDesc: 'محرك حماية أندرويد متطور يعمل بأسلوب رد الفعل الفوري (Zero Battery Drain)، يتصدى لهجمات الشاشة السوداء، يقطع الإنترنت تلقائياً عند الخطر، ويولد ملفات شكوى رسمية للشرطة والدرك الوطني.',
+        viewMobile: 'الهاتف التفاعلي',
+        viewSpecs: 'المعمارية والهوية',
+        netConnected: '4G+ WiFi متصل',
+        netIsolated: '⚡ معزول (Kill-Switch مفعل)',
+        appInsideTitle: 'حارس بريدي',
+        appStatusText: '● الحماية النشطة تعمل (بدون استهلاك بطارية)',
+        runScanText: 'فحص أمان تطبيقات الدفع الآن',
+        navHome: 'الرئيسية',
+        navPhishing: 'الروابط',
+        navForensics: 'قضائي',
+        navSim: 'المحاكي'
+      },
+      fr: {
+        dir: 'ltr',
+        subTitle: 'Système proactif anti-malware pour BaridiMob et paiements en Algérie',
+        emergencyBtn: 'Urgence 1530',
+        heroBadge: '🛡️ Protection Intégrale Anti-Piratage BaridiMob',
+        heroSpec: 'Coupe-circuit réseau + Zéro consommation batterie',
+        heroTitle: 'Bouclier Bancaire BaridiGuard',
+        heroDesc: 'Moteur de sécurité Android à déclenchement réactif (Zero Battery Drain). Bloque les attaques d\'écran noir, coupe internet automatiquement et génère le dossier judiciaire pour la Gendarmerie/Police.',
+        viewMobile: 'Mobile Interactif',
+        viewSpecs: 'Architecture & Marque',
+        netConnected: '4G+ WiFi Connecté',
+        netIsolated: '⚡ Isolé (Kill-Switch Actif)',
+        appInsideTitle: 'BaridiGuard Pro',
+        appStatusText: '● Protection active (Zéro drain batterie)',
+        runScanText: 'Analyser la sécurité bancaire',
+        navHome: 'Accueil',
+        navPhishing: 'Liens',
+        navForensics: 'Justice',
+        navSim: 'Simulateur'
+      }
+    };
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      const dict = i18n[lang];
+      const root = document.getElementById('htmlRoot');
+      root.dir = dict.dir;
+      root.lang = lang;
+
+      const btnAr = document.getElementById('langArBtn');
+      const btnFr = document.getElementById('langFrBtn');
+      if (lang === 'ar') {
+        btnAr.className = "px-2.5 py-1 rounded-lg font-bold bg-guard-emerald text-guard-950 transition";
+        btnFr.className = "px-2.5 py-1 rounded-lg font-bold text-slate-400 hover:text-white transition";
+      } else {
+        btnFr.className = "px-2.5 py-1 rounded-lg font-bold bg-guard-emerald text-guard-950 transition";
+        btnAr.className = "px-2.5 py-1 rounded-lg font-bold text-slate-400 hover:text-white transition";
+      }
+
+      document.getElementById('lblSubTitle').innerText = dict.subTitle;
+      document.getElementById('lblEmergencyBtn').innerText = dict.emergencyBtn;
+      document.getElementById('lblHeroBadge').innerText = dict.heroBadge;
+      document.getElementById('lblHeroSpec').innerText = dict.heroSpec;
+      document.getElementById('lblHeroDesc').innerText = dict.heroDesc;
+      document.getElementById('lblViewMobile').innerText = dict.viewMobile;
+      document.getElementById('lblViewSpecs').innerText = dict.viewSpecs;
+      document.getElementById('lblAppInsideTitle').innerText = dict.appInsideTitle;
+      document.getElementById('lblAppStatusText').innerText = dict.appStatusText;
+      document.getElementById('lblRunScanText').innerText = dict.runScanText;
+      document.getElementById('navHome').innerText = dict.navHome;
+      document.getElementById('navPhishing').innerText = dict.navPhishing;
+      document.getElementById('navForensics').innerText = dict.navForensics;
+      document.getElementById('navSim').innerText = dict.navSim;
+
+      playBeep(700, 0.05);
+    }
+
+    // Tab Navigation
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('#tabDashboard, #tabPhishing, #tabForensics, #tabSimulator').forEach(el => el.classList.add('hidden'));
+      document.getElementById(tabId).classList.remove('hidden');
+
+      document.querySelectorAll('.nav-btn').forEach(b => {
+        b.classList.remove('text-guard-emerald');
+        b.classList.add('text-slate-400');
+      });
+      if (btn) {
+        btn.classList.remove('text-slate-400');
+        btn.classList.add('text-guard-emerald');
+      }
+      playBeep(600, 0.05);
+    }
+
+    function setViewMode(mode) {
+      const mobileContainer = document.getElementById('mobileSimulatorContainer');
+      const specsContainer = document.getElementById('specsContainer');
+      const viewMobileBtn = document.getElementById('viewMobileBtn');
+      const viewAuditBtn = document.getElementById('viewAuditBtn');
+
+      if (mode === 'mobile') {
+        mobileContainer.classList.remove('hidden');
+        specsContainer.classList.add('hidden');
+        viewMobileBtn.className = "px-4 py-2 rounded-lg text-xs font-bold transition bg-guard-emerald text-guard-950 shadow";
+        viewAuditBtn.className = "px-4 py-2 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white";
+      } else {
+        mobileContainer.classList.add('hidden');
+        specsContainer.classList.remove('hidden');
+        viewAuditBtn.className = "px-4 py-2 rounded-lg text-xs font-bold transition bg-guard-emerald text-guard-950 shadow";
+        viewMobileBtn.className = "px-4 py-2 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white";
+      }
+      playBeep(700, 0.05);
+    }
+
+    // Test Pure Siren
+    function testPureSiren() {
+      playPureCyberSiren(1.8);
+    }
+
+    // Network Kill Switch
+    let isNetIsolated = false;
+    function testNetworkKillSwitch() {
+      isNetIsolated = !isNetIsolated;
+      const statusBadge = document.getElementById('phoneNetworkStatus');
+      const statusText = document.getElementById('lblNetStatus');
+      const simLogs = document.getElementById('simLogs');
+
+      if (isNetIsolated) {
+        playPureCyberSiren(0.8);
+        statusBadge.className = "flex items-center gap-1 text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded border border-red-500/40";
+        statusText.innerText = currentLang === 'ar' ? "⚡ معزول (Kill-Switch مفعل)" : "⚡ Isolé (Kill-Switch Actif)";
+        simLogs.innerHTML += `<div class="text-red-400">> [KILL-SWITCH] Network Isolated. WiFi & Cellular radio cut off.</div>`;
+      } else {
+        playSuccessChime();
+        statusBadge.className = "flex items-center gap-1 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/30";
+        statusText.innerText = currentLang === 'ar' ? "4G+ WiFi متصل" : "4G+ WiFi Connecté";
+        simLogs.innerHTML += `<div class="text-guard-emerald">> [NETWORK] Normal connection restored.</div>`;
+      }
+    }
+
+    // Phishing Scanner
+    function setPhishTest(url) {
+      document.getElementById('phishInputUrl').value = url;
+      checkPhishingLink();
+    }
+
+    function checkPhishingLink() {
+      const url = document.getElementById('phishInputUrl').value.toLowerCase();
+      const box = document.getElementById('phishResultBox');
+      const title = document.getElementById('lblPhishResultTitle');
+      const reason = document.getElementById('lblPhishResultReason');
+
+      if (url.includes('baridinet.poste.dz') || url.includes('algerieposte.dz') || url.includes('poste.dz')) {
+        playSuccessChime();
+        box.className = "bg-emerald-950/40 border border-emerald-500/50 rounded-xl p-3 space-y-1 text-xs";
+        title.innerHTML = `<span class="text-guard-emerald font-bold">✓ رابط رسمي موثوق (Site Officiel Certifié)</span>`;
+        reason.innerText = currentLang === 'ar' ? 
+          "هذا الرابط تابع رسمياً لخوادم بريد الجزائر وهو آمن للاستخدام." : 
+          "Ce domaine appartient officiellement à Algérie Poste et est sécurisé.";
+      } else {
+        playPureCyberSiren(0.6);
+        box.className = "bg-red-950/40 border border-red-500/50 rounded-xl p-3 space-y-1 text-xs";
+        title.innerHTML = `<span class="text-red-400 font-bold">🚨 تنبيه احتيال خطير (Hameçonnage Détecté)</span>`;
+        reason.innerText = currentLang === 'ar' ?
+          "رابط مشبوه ينتحل هوية بريد الجزائر أو منحة البطالة لسرقة بيانات البطاقة الذهبية ورصيد بريدي موب!" :
+          "Lien frauduleux usurpant Algérie Poste pour dérober vos identifiants Edahabia et vider votre compte BaridiMob!";
+      }
+    }
+
+    // Forensic Dossier (Section 3)
+    function openForensicReportModal() {
+      playBeep(650, 0.08);
+      const modal = document.getElementById('forensicModal');
+      const content = document.getElementById('forensicReportContent');
+
+      content.innerHTML = `
+================================================================================
+          الجمهورية الجزائرية الديمقراطية الشعبية
+       RÉPUBLIQUE ALGÉRIENNE DÉMOCRATIQUE ET POPULAIRE
+================================================================================
+ملف أدلة رقمية لإيداع شكوى: جريمة قرصنة واستيلاء غير مشروع على حساب بريدي
+DOSSIER DE PREUVE NUMÉRIQUE: CYBERCRIMINALITÉ & FRAUDE BANCAIRE BARIDIMOB
+--------------------------------------------------------------------------------
+موجّه إلى:
+- مصالح الأمن الوطني / الدرك الوطني (فرقة مكافحة الجرائم السيبيريانية والمعلوماتية)
+- مؤسسة بريد الجزائر (مديرية الأمن المعلوماتي ومتابعة المنازعات)
+
+Destiné aux:
+- Services de la Police Judiciaire et de la Gendarmerie Nationale (Lutte Anti-Cybercriminalité)
+- Algérie Poste (Direction de la Sécurité des Systèmes d'Information)
+================================================================================
+
+1. معلومات الضحية والحساب المتضرر / IDENTITÉ DE LA VICTIME:
+- الاسم واللقب / Nom & Prénom: مواطن متضرر (Victime d'acte cybercriminel)
+- رقم الهاتف المسجل في بريدي موب / N° Téléphone BaridiMob: 06XX-XX-XX-XX
+- رقم الحساب البريدي الجاري / RIP ou N° CCP: 00799999000123456789
+- تاريخ وتوقيت رصد الهجوم / Horodatage de l'attaque: 2026-10-24 15:30:12 UTC+1
+- القيمة المالية المستهدفة / Montant visé: 500,000 DZD (50 Million Centimes)
+
+2. بيانات الجهاز والبيئة الرقمية / DÉTAILS DU TÉLÉPHONE COMPROMIS:
+- طراز الهاتف / Modèle de l'appareil: Samsung Galaxy A54 (Android 14)
+- بصمة البناء الأمنية / Build Fingerprint: samsung/a54xxx/user/release-keys
+
+3. البصمة الجنائية للبرمجية الخبيثة (تروجان أندرويد) / IDENTIFICATION DU MALWARE:
+- الاسم الظاهري للتطبيق الخبيث / Nom de l'APK: CinemaFlix Pro HD (APK)
+- اسم الحزمة البرمجية / Package Identifier: com.cinemaflix.stream.hd
+- البصمة الرقمية المشفرة / SHA-256 Checksum: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+- مصدر التثبيت / Source: تحميل ملف APK خارجي خارج متجر Google Play
+
+4. السلوكيات الجنائية المرصودة تقنياً / ACTIONS FRAUDULEUSES DÉTECTÉES:
+[X] 1. استغلال خدمات إمكانية الوصول (Accessibility Services Abuse) للنقر الخفي.
+[X] 2. هجوم الغطاء الحاجب (Black Screen Overlay Attack) بعنوان "يتم تحديث الهاتف".
+[X] 3. اعتراض وحذف رسائل التأكيد (SMS/OTP Interception & Deletion).
+[X] 4. الحساب البريدي المستلم للتحويلات / RIP Destinataire Intercepté: 00799999000987654321
+
+5. السند القانوني في التشريع الجزائري / FONDEMENT JURIDIQUE:
+- المواد 394 مكرر إلى 394 مكرر 2 من قانون العقوبات الجزائري (المساس بالمعالجة الآلية للمعطيات).
+- القانون رقم 18-07 المؤرخ في 10 يونيو 2018 المتعلق بحماية المعطيات ذات الطابع الشخصي.
+
+Rapport officiel horodaté certifié par BaridiGuard Forensic Engine.
+================================================================================
+      `;
+      modal.classList.remove('hidden');
+    }
+
+    function closeForensicReportModal() {
+      document.getElementById('forensicModal').classList.add('hidden');
+    }
+
+    function copyForensicDossier() {
+      const text = document.getElementById('forensicReportContent').innerText;
+      navigator.clipboard.writeText(text);
+      playSuccessChime();
+      alert(currentLang === 'ar' ? 'تم نسخ التقرير الجنائي بنجاح! يمكنك الآن طباعته وتقديمه لفرقة الدرك الوطني أو الشرطة.' : 'Dossier copié ! Vous pouvez l\'imprimer pour le déposer à la Gendarmerie ou Police.');
+    }
+
+    // Security Scan Simulation
+    let isScanning = false;
+    function startSecurityScan() {
+      if (isScanning) return;
+      isScanning = true;
+      playBeep(500, 0.1);
+
+      const scanBtn = document.getElementById('runScanBtn');
+      const scanText = document.getElementById('scanProgressText');
+      const scoreBadge = document.getElementById('scoreBadge');
+      const radarBeam = document.getElementById('radarBeam');
+
+      scanBtn.disabled = true;
+      radarBeam.classList.add('border-guard-gold');
+
+      let stepsAr = ["فحص خدمات إمكانية الوصول...", "تدقيق النوافذ العائمة (Overlays)...", "مراقبة الـ OTP والـ SMS...", "فحص الروابط المشبوهة..."];
+      let stepsFr = ["Vérification Accessibility...", "Inspection des Overlays...", "Surveillance OTP & SMS...", "Scan des liens frauduleux..."];
+      let steps = currentLang === 'ar' ? stepsAr : stepsFr;
+      let stepIndex = 0;
+
+      const interval = setInterval(() => {
+        if (stepIndex < steps.length) {
+          scanText.innerText = steps[stepIndex];
+          playBeep(750 + (stepIndex * 80), 0.08);
+          stepIndex++;
+        } else {
+          clearInterval(interval);
+          isScanning = false;
+          radarBeam.classList.remove('border-guard-gold');
+          scanBtn.disabled = false;
+          scanText.innerText = currentLang === 'ar' ? "الهاتف محمي 100%" : "Appareil 100% Sécurisé";
+          scoreBadge.innerText = currentLang === 'ar' ? "100% آمن" : "100% Sûr";
+          playSuccessChime();
+        }
+      }, 500);
+    }
+
+    // Attack Simulator
+    function triggerSimulatedAttack() {
+      playPureCyberSiren(1.2);
+      const blackScreen = document.getElementById('simulatedBlackScreen');
+      const alertPopup = document.getElementById('baridiInterceptionAlert');
+      const simLogs = document.getElementById('simLogs');
+
+      blackScreen.classList.remove('hidden');
+      alertPopup.classList.add('hidden', 'scale-95', 'opacity-0');
+
+      simLogs.innerHTML += `<div class="text-amber-400">> [ATTACK DETECTED] Fake 'Updating Phone' Black Screen Launched.</div>`;
+
+      setTimeout(() => {
+        // Trigger pure siren alarm
+        playPureCyberSiren(2.0);
+        // Cut network automatically (Kill-Switch triggered)
+        testNetworkKillSwitch();
+
+        simLogs.innerHTML += `<div class="text-red-400">> [EMERGENCY] Pure Multi-Tone Alarm Sound Triggered!</div>`;
+        simLogs.innerHTML += `<div class="text-guard-emerald">> [ISOLATION] Auto Kill-Switch CUT OFF WiFi and Mobile Data!</div>`;
+
+        alertPopup.classList.remove('hidden');
+        setTimeout(() => {
+          alertPopup.classList.remove('scale-95', 'opacity-0');
+          alertPopup.classList.add('scale-100', 'opacity-100');
+        }, 50);
+      }, 1500);
+    }
+
+    function dismissAttackSimulation() {
+      playSuccessChime();
+      document.getElementById('simulatedBlackScreen').classList.add('hidden');
+    }
+
+    function openEmergencyModal() {
+      playPureCyberSiren(0.8);
+      document.getElementById('emergencyModal').classList.remove('hidden');
+    }
+    function closeEmergencyModal() {
+      document.getElementById('emergencyModal').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>

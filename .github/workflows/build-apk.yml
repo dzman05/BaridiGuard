@@ -1,0 +1,74 @@
+name: Build BaridiGuard Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build & Package Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.9
+
+      - name: Build Debug APK
+        working-directory: ./android-app
+        run: |
+          gradle assembleDebug --stacktrace
+
+      - name: Copy & Rename APK
+        run: |
+          mkdir -p release-output
+          cp android-app/app/build/outputs/apk/debug/app-debug.apk release-output/BaridiGuard-v1.0.apk
+
+      - name: Upload APK as Workflow Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BaridiGuard-v1.0-APK
+          path: release-output/BaridiGuard-v1.0.apk
+          retention-days: 30
+
+      - name: Create GitHub Release with APK
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0
+          name: "BaridiGuard v1.0.0 (Official APK)"
+          body: |
+            ## 🛡️ BaridiGuard v1.0.0 - حارس بريدي
+            
+            تطبيق الحماية الاستباقية لتطبيق **BaridiMob** والبطاقة الذهبية في الجزائر.
+            
+            ### المميزات المضمنة في هذه النسخة:
+            - 🚫 **كاشف الشاشة السوداء المزيفة** ("يتم تحديث الهاتف")
+            - ⚡ **قاطع الإنترنت التلقائي (Kill-Switch)** لعزل الهاتف فور رصد هجوم
+            - 📩 **خزنة أكواد الـ OTP** لمنع الحذف التلقائي لرسائل بريد الجزائر
+            - 🛡️ **درع الحماية الذاتية (Anti-Kill)** ضد محاولات الفيروسات إلغاء التثبيت
+            - ⚖️ **مولد ملف الشكوى الجنائية** للدرك الوطني والشرطة
+            - 🔋 **Zero Battery Drain** بدون أي استهلاك للبطارية
+            - 🌐 واجهة ثنائية اللغة: **عربية وفرنسية**
+          files: release-output/BaridiGuard-v1.0.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

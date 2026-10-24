@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">BaridiGuard</string>
+    <string name="app_desc">BaridiGuard - Bouclier de protection BaridiMob et anti-cheval de Troie bancaire</string>
+    <string name="device_admin_label">Bouclier d\'auto-défense (Anti-Désinstallation)</string>
+    <string name="device_admin_description">Empêche les logiciels malveillants et chevaux de Troie de désinstaller BaridiGuard ou de forcer son arrêt.</string>
+    
+    <!-- UI Strings in French -->
+    <string name="status_protected">Appareil sécurisé à 100%</string>
+    <string name="status_scanning">Analyse approfondie en cours...</string>
+    <string name="btn_run_scan">Scanner la sécurité bancaire</string>
+    <string name="title_active_defenses">Boucliers de défense actifs</string>
+    <string name="defense_baridimob_title">Blindage BaridiMob</string>
+    <string name="defense_baridimob_sub">Blocage des clics invisibles et accès non autorisés</string>
+    <string name="defense_overlay_title">Détecteur d\'écran noir factice</string>
+    <string name="defense_overlay_sub">Empêche le piège «Mise à jour du téléphone en cours»</string>
+    <string name="defense_otp_title">Coffre-fort des codes OTP</string>
+    <string name="defense_otp_sub">Interception prioritaire et alerte avant suppression</string>
+    <string name="defense_autokill_title">Bouclier d\'auto-défense (Anti-Kill)</string>
+    <string name="defense_autokill_sub">Immunité totale contre l\'arrêt forcé par un malware</string>
+    <string name="defense_killswitch_title">Coupe-circuit réseau d\'urgence</string>
+    <string name="defense_killswitch_sub">Coupe automatique du Wi-Fi/4G en cas d\'attaque</string>
+    <string name="title_phishing_shield">Bouclier anti-hameçonnage (Anti-Phishing)</string>
+    <string name="title_forensic_report">Dossier judiciaire de cybercriminalité</string>
+    <string name="btn_export_forensic">Générer le rapport de plainte (Police / Gendarmerie)</string>
+</resources>

@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.BaridiGuard" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">#0B1528</item>
+        <item name="android:navigationBarColor">#070D19</item>
+        <item name="android:windowBackground">#070D19</item>
+    </style>
+</resources>

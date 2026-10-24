@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">BaridiGuard</string>
+    <string name="app_desc">حارس بريدي - درع حماية بريدي موب ومكافحة تروجانات أندرويد</string>
+    <string name="device_admin_label">درع الحماية الذاتية (Anti-Uninstall)</string>
+    <string name="device_admin_description">يمنع التروجانات وبرمجيات التجسس من إلغاء تثبيت BaridiGuard أو فرض إيقافه أثناء الهجوم على بريدي موب.</string>
+
+    <!-- UI Strings in Arabic -->
+    <string name="status_protected">الهاتف محمي بنسبة 100%</string>
+    <string name="status_scanning">جاري الفحص المتقدم للهاتف...</string>
+    <string name="btn_run_scan">فحص أمان تطبيقات الدفع الآن</string>
+    <string name="title_active_defenses">حالة دروع الحماية النشطة</string>
+    <string name="defense_baridimob_title">درع تطبيق بريدي موب</string>
+    <string name="defense_baridimob_sub">حظر النقرات غير المرئية في الخلفية</string>
+    <string name="defense_overlay_title">كاشف الشاشة السوداء المزيفة</string>
+    <string name="defense_overlay_sub">منع شاشة التحديث المزيفة "يتم تحديث الهاتف"</string>
+    <string name="defense_otp_title">خزنة رسائل التأكيد OTP</string>
+    <string name="defense_otp_sub">تأمين الرسائل بأولوية قصوى من الحذف الخفي</string>
+    <string name="defense_autokill_title">درع الحماية الذاتية (Anti-Kill)</string>
+    <string name="defense_autokill_sub">منع الفيروس من فرض الإيقاف أو الحذف</string>
+    <string name="defense_killswitch_title">قاطع الاتصال التلقائي عند الخطر</string>
+    <string name="defense_killswitch_sub">عزل الهاتف وقطع الإنترنت فوراً لمنع تحويل الأموال</string>
+    <string name="title_phishing_shield">درع روابط الاحتيال</string>
+    <string name="title_forensic_report">حقيبة الضحية وتقرير الجريمة الإلكترونية</string>
+    <string name="btn_export_forensic">توليد تقرير رسمي للشرطة / الدرك الوطني</string>
+</resources>
