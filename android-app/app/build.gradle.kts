@@ -11,8 +11,8 @@ android {
         applicationId = "dz.baridiguard"
         minSdk = 26
         targetSdk = 34
-        versionCode = 9
-        versionName = "1.3.1"
+        versionCode = 10
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

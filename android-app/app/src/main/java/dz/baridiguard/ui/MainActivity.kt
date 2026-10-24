@@ -243,7 +243,7 @@ fun MainAppScreen(
                                         color = EmeraldDark
                                     ) {
                                         Text(
-                                            "v1.3.1",
+                                            "v1.0.0",
                                             modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
                                             fontSize = 9.sp,
                                             fontWeight = FontWeight.Bold,
@@ -252,7 +252,7 @@ fun MainAppScreen(
                                     }
                                 }
                                 Text(
-                                    text = if (isArabic) "حارس بريدي • الدرع الشامل" else "Bouclier BaridiMob • v1.3.1",
+                                    text = if (isArabic) "حارس بريدي • الدرع الشامل" else "Bouclier BaridiMob • v1.0.0",
                                     fontSize = 10.5.sp,
                                     color = EmeraldLight
                                 )
