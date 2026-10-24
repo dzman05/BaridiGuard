@@ -7,7 +7,6 @@ import android.media.AudioTrack
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.*
@@ -20,7 +19,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,10 +39,8 @@ import androidx.compose.ui.unit.sp
 import dz.baridiguard.R
 import dz.baridiguard.security.*
 import dz.baridiguard.ui.theme.*
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
 
@@ -100,7 +102,6 @@ class MainActivity : ComponentActivity() {
 
                 for (i in 0 until numSamples) {
                     val progress = i.toDouble() / numSamples
-                    // تردد يتصاعد ويهبط بشكل حاد كسيرينة أمنية (800Hz إلى 1600Hz)
                     val freq = 800.0 + 800.0 * kotlin.math.sin(2.0 * Math.PI * progress * 4.0)
                     val angle = 2.0 * Math.PI * i * freq / sampleRate
                     buffer[i] = (kotlin.math.sin(angle) * Short.MAX_VALUE * 0.7).toInt().toShort()
@@ -165,7 +166,7 @@ fun MainAppScreen(
                                 .border(1.dp, EmeraldLight, RoundedCornerShape(10.dp)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Default.Security, contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp))
+                            Icon(Icons.Default.Lock, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
                         }
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
@@ -187,20 +188,20 @@ fun MainAppScreen(
                 NavigationBarItem(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
-                    icon = { Icon(Icons.Default.Shield, contentDescription = null) },
-                    label = { Text("الرئيسية / Accueil", fontSize = 10.sp) }
+                    icon = { Icon(Icons.Default.Home, contentDescription = null) },
+                    label = { Text("الرئيسية", fontSize = 11.sp) }
                 )
                 NavigationBarItem(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
-                    icon = { Icon(Icons.Default.Link, contentDescription = null) },
-                    label = { Text("روابط / Liens", fontSize = 10.sp) }
+                    icon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    label = { Text("الروابط", fontSize = 11.sp) }
                 )
                 NavigationBarItem(
                     selected = selectedTab == 2,
                     onClick = { selectedTab = 2 },
-                    icon = { Icon(Icons.Default.Description, contentDescription = null) },
-                    label = { Text("قضائي / Police", fontSize = 10.sp) }
+                    icon = { Icon(Icons.Default.Info, contentDescription = null) },
+                    label = { Text("قضائي", fontSize = 11.sp) }
                 )
             }
         },
@@ -357,7 +358,7 @@ fun DashboardTab(
                 border = androidx.compose.foundation.BorderStroke(1.dp, GoldAccent),
                 shape = RoundedCornerShape(10.dp)
             ) {
-                Text("🔊 اختبار صفارة الإنذار", fontSize = 11.sp, color = GoldLight)
+                Text("🔊 صفارة الإنذار", fontSize = 11.sp, color = GoldLight)
             }
 
             Button(
@@ -367,7 +368,7 @@ fun DashboardTab(
                 border = androidx.compose.foundation.BorderStroke(1.dp, DangerRed),
                 shape = RoundedCornerShape(10.dp)
             ) {
-                Text("⚡ قطع الإنترنت الفوري", fontSize = 11.sp, color = DangerRed)
+                Text("⚡ قطع الإنترنت", fontSize = 11.sp, color = DangerRed)
             }
         }
 
@@ -390,12 +391,31 @@ fun DashboardTab(
 }
 
 @Composable
+fun DefenseRow(title: String, subtitle: String, active: Boolean) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color.White)
+            Text(subtitle, fontSize = 10.sp, color = Color.Gray)
+        }
+        Switch(
+            checked = active,
+            onCheckedChange = null,
+            colors = SwitchDefaults.colors(checkedThumbColor = EmeraldLight, checkedTrackColor = EmeraldDark)
+        )
+    }
+}
+
+@Composable
 fun PhishingScannerTab(scanner: PhishingScanner) {
     var inputUrl by remember { mutableStateOf("https://baridimob-update-algerie.cc") }
     var scanResult by remember { mutableStateOf<PhishingScanner.ScanResult?>(null) }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text("درع روابط الاحتيال (Anti-Phishing Shield)", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White)
+        Text("درع روابط الاحتيال (Anti-Phishing)", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White)
         Text("افحص أي رابط قبل فتحه للتأكد من أنه لا ينتحل بريدي موب أو بطاقة الذهبية:", fontSize = 12.sp, color = Color.Gray)
 
         Spacer(modifier = Modifier.height(14.dp))
@@ -415,7 +435,7 @@ fun PhishingScannerTab(scanner: PhishingScanner) {
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
         ) {
-            Text("فحص أمان الرابط الآن / Analyser le lien", color = Color.Black, fontWeight = FontWeight.Bold)
+            Text("فحص أمان الرابط الآن", color = Color.Black, fontWeight = FontWeight.Bold)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -446,7 +466,7 @@ fun PhishingScannerTab(scanner: PhishingScanner) {
 @Composable
 fun ForensicsTab(onGenerateReport: () -> Unit) {
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text("حقيبة الضحية وتقرير الأدلة الرقمية (Dossier Judiciaire)", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White)
+        Text("حقيبة الضحية وتقرير الأدلة الرقمية", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White)
         Text("توليد ملف أدلة فني وقانوني موجه لفرقة مكافحة الجرائم المعلوماتية (الدرك الوطني / الأمن الوطني):", fontSize = 12.sp, color = Color.Gray)
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -474,7 +494,7 @@ fun ForensicsTab(onGenerateReport: () -> Unit) {
             shape = RoundedCornerShape(12.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Download, contentDescription = null, tint = Color.Black)
+                Icon(Icons.Default.Share, contentDescription = null, tint = Color.Black)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("توليد وطباعة ملف الشكوى الجنائية", color = Color.Black, fontWeight = FontWeight.Bold)
             }
