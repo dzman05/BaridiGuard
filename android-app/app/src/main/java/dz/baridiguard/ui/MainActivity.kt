@@ -86,6 +86,7 @@ class MainActivity : ComponentActivity() {
                     isDeviceAdminActive = isDeviceAdminActive(),
                     onRequestDeviceAdmin = { requestDeviceAdmin() },
                     onOpenAppDetails = { openAppDetailsSettings() },
+                    onOpenPrivacyUrl = { openPrivacyPolicyUrl() },
                     onPlaySiren = { playPureCyberAlarmSiren() },
                     onCall1530 = { callAlgeriePosteEmergency() },
                     onLaunchBaridiMob = { launchBaridiMobApp() }
@@ -138,6 +139,15 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    fun openPrivacyPolicyUrl() {
+        try {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://dzman05.github.io/BaridiGuard/privacy-policy.html"))
+            startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(this, "https://dzman05.github.io/BaridiGuard/privacy-policy.html", Toast.LENGTH_LONG).show()
+        }
+    }
+
     private fun launchBaridiMobApp() {
         try {
             val pm = packageManager
@@ -185,18 +195,25 @@ fun MainAppScreen(
     isDeviceAdminActive: Boolean,
     onRequestDeviceAdmin: () -> Unit,
     onOpenAppDetails: () -> Unit,
+    onOpenPrivacyUrl: () -> Unit,
     onPlaySiren: () -> Unit,
     onCall1530: () -> Unit,
     onLaunchBaridiMob: () -> Unit
 ) {
-    // In-App Language Toggle: true = Arabic (RTL), false = French (LTR)
     var isArabic by remember { mutableStateOf(true) }
     var selectedTab by remember { mutableStateOf(0) }
     var isScanning by remember { mutableStateOf(false) }
     var isAlarmPlaying by remember { mutableStateOf(false) }
     var securityScore by remember { mutableStateOf(98) }
+    
+    // Modals & Prominent Disclosures for Google Play Compliance
     var showEmergencyDialog by remember { mutableStateOf(false) }
     var showDossierDialog by remember { mutableStateOf(false) }
+    var showPrivacyDialog by remember { mutableStateOf(false) }
+    var showAccessibilityDisclosureDialog by remember { mutableStateOf(false) }
+    var showSmsDisclosureDialog by remember { mutableStateOf(false) }
+    var showDeviceAdminDisclosureDialog by remember { mutableStateOf(false) }
+
     var generatedReportText by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
 
@@ -226,7 +243,7 @@ fun MainAppScreen(
                                         color = EmeraldDark
                                     ) {
                                         Text(
-                                            "v1.3.0",
+                                            "v1.3.1",
                                             modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
                                             fontSize = 9.sp,
                                             fontWeight = FontWeight.Bold,
@@ -235,7 +252,7 @@ fun MainAppScreen(
                                     }
                                 }
                                 Text(
-                                    text = if (isArabic) "حارس بريدي • الدرع الشامل" else "Bouclier BaridiMob • v1.3.0",
+                                    text = if (isArabic) "حارس بريدي • الدرع الشامل" else "Bouclier BaridiMob • v1.3.1",
                                     fontSize = 10.5.sp,
                                     color = EmeraldLight
                                 )
@@ -243,18 +260,28 @@ fun MainAppScreen(
                         }
                     },
                     actions = {
-                        // Language Switcher
+                        // Privacy & Compliance Icon Button
+                        IconButton(onClick = { showPrivacyDialog = true }) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.fa_shield_halved),
+                                contentDescription = "Confidentialité",
+                                tint = EmeraldLight,
+                                modifier = Modifier.size(19.dp)
+                            )
+                        }
+
+                        // Language Switcher [ 🇩🇿 AR | 🇫🇷 FR ]
                         Surface(
                             shape = RoundedCornerShape(8.dp),
                             color = GuardCardDark,
                             border = androidx.compose.foundation.BorderStroke(1.dp, EmeraldLight.copy(alpha = 0.5f)),
                             modifier = Modifier
-                                .padding(end = 4.dp)
+                                .padding(horizontal = 4.dp)
                                 .clickable { isArabic = !isArabic }
                         ) {
                             Text(
                                 text = if (isArabic) "🇫🇷 FR" else "🇩🇿 AR",
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
@@ -343,9 +370,10 @@ fun MainAppScreen(
                         hasUsagePermission = baridiMobDetector.hasUsageStatsPermission(),
                         hasSmsPermission = hasSmsPermission,
                         isDeviceAdminActive = isDeviceAdminActive,
-                        onRequestSmsPermission = onRequestSmsPermission,
-                        onRequestDeviceAdmin = onRequestDeviceAdmin,
+                        onRequestSmsPermission = { showSmsDisclosureDialog = true },
+                        onRequestDeviceAdmin = { showDeviceAdminDisclosureDialog = true },
                         onOpenAppDetails = onOpenAppDetails,
+                        onOpenPrivacyPolicy = { showPrivacyDialog = true },
                         onStartScan = {
                             coroutineScope.launch {
                                 isScanning = true
@@ -388,15 +416,13 @@ fun MainAppScreen(
                                 }
                             }
                         },
-                        onOpenAccessibility = {
-                            baridiMobDetector.openAccessibilitySettings()
-                        },
+                        onOpenAccessibility = { showAccessibilityDisclosureDialog = true },
                         onLaunchBaridiMob = onLaunchBaridiMob
                     )
                     1 -> OtpVaultTab(
                         isArabic = isArabic,
                         hasSmsPermission = hasSmsPermission,
-                        onRequestSmsPermission = onRequestSmsPermission
+                        onRequestSmsPermission = { showSmsDisclosureDialog = true }
                     )
                     2 -> PhishingScannerTab(isArabic, phishingScanner)
                     3 -> ForensicsTab(
@@ -420,6 +446,237 @@ fun MainAppScreen(
                     )
                 }
             }
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        // 📜 نافذة سياسة الخصوصية وإخلاء المسؤولية (Google Play Privacy Modal)
+        // ══════════════════════════════════════════════════════════════════
+        if (showPrivacyDialog) {
+            AlertDialog(
+                onDismissRequest = { showPrivacyDialog = false },
+                title = {
+                    Text(
+                        text = if (isArabic) "🛡️ سياسة الخصوصية وأمان البيانات" else "🛡️ Confidentialité & Non-Affiliation",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp
+                    )
+                },
+                text = {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(360.dp)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = GuardSurfaceDark,
+                            border = androidx.compose.foundation.BorderStroke(1.dp, GoldAccent)
+                        ) {
+                            Text(
+                                text = if (isArabic) {
+                                    "⚖️ إخلاء مسؤولية رسمي:\nBaridiGuard هو تطبيق أمني سيبراني مستقل ومفتوح المصدر، غير تابع أو معتمد رسمياً من قِبل مؤسسة بريد الجزائر (Algérie Poste) أو تطبيق بريدي موب."
+                                } else {
+                                    "⚖️ Avis Légal Officiel:\nBaridiGuard est un outil de cybersécurité open-source indépendant, non affilié et non représenté par l'établissement public Algérie Poste ou BaridiMob."
+                                },
+                                fontSize = 11.sp,
+                                modifier = Modifier.padding(10.dp),
+                                color = GoldLight
+                            )
+                        }
+
+                        Text(
+                            text = if (isArabic) {
+                                "🔒 مبدأ الخصوصية الصارم (معالجة محلية 100%):\n• لا نجمع، ولا نخزن على أي سيرفر خارجي، ولا نشارك أي بيانات شخصية أو بنكية إطلاقاً.\n• جميع عمليات الرصد وحفظ الـ OTP تجري بالكامل داخل هاتفك.\n• كود المصدر متاح علناً للمراجعة الأمنية على GitHub."
+                            } else {
+                                "🔒 Principe de Zéro Collecte (100% Local):\n• Aucune donnée personnelle ou bancaire n'est collectée, stockée sur serveur ou partagée.\n• Toutes les analyses de sécurité s'exécutent strictement en local sur votre appareil.\n• Code source ouvert et auditable sur GitHub."
+                            },
+                            fontSize = 11.sp,
+                            color = Color.White
+                        )
+
+                        Button(
+                            onClick = onOpenPrivacyUrl,
+                            modifier = Modifier.fillMaxWidth().height(38.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = EmeraldDark)
+                        ) {
+                            Text(
+                                text = if (isArabic) "🌐 فتح رابط السياسة الكامل في المتصفح" else "🌐 Ouvrir la politique complète en ligne",
+                                fontSize = 10.5.sp,
+                                color = EmeraldLight,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = { showPrivacyDialog = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
+                    ) {
+                        Text(if (isArabic) "فهمت وأوافق ✓" else "Fermer ✓", color = Color.Black, fontWeight = FontWeight.Bold)
+                    }
+                }
+            )
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        // 🛡️ إفصاح إمكانية الوصول البارز الإلزامي (Google Play Accessibility Disclosure)
+        // ══════════════════════════════════════════════════════════════════
+        if (showAccessibilityDisclosureDialog) {
+            AlertDialog(
+                onDismissRequest = { showAccessibilityDisclosureDialog = false },
+                title = {
+                    Text(
+                        text = if (isArabic) "🛡️ إفصاح بارز: خدمة إمكانية الوصول" else "🛡️ Déclaration d'Accessibilité (Google Play)",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.5.sp
+                    )
+                },
+                text = {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(280.dp)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = if (isArabic) {
+                                "وفقاً لسياسات Google Play الصارمة، يُفصح تطبيق BaridiGuard بشكل صريح عما يلي:\n\n" +
+                                "1. الغاية الأمنية الوحيدة:\nيستخدم BaridiGuard واجهة برمجة تطبيقات AccessibilityService حصراً لكشف تشغيل تطبيق الدفع الرسمي (ru.bpc.mobilebank.bpc) وإطلاق صفارة إنذار، ولحظر النوافذ الخبيثة والشاشات السوداء المزيفة ('جاري تحديث الهاتف...').\n\n" +
+                                "2. أمان بياناتك:\n• لا نسجل ضغطات المفاتيح (No Keylogging).\n• لا نقرأ كلمات المرور أو الأرصدة.\n• لا نلتقط أي صورة للشاشة.\n• لا نرسل أي معلومة عبر الإنترنت إطلاقاً."
+                            } else {
+                                "Conformément aux exigences de Google Play, BaridiGuard déclare expressément:\n\n" +
+                                "1. Finalité exclusive de sécurité:\nBaridiGuard utilise l'API AccessibilityService uniquement pour détecter l'ouverture de BaridiMob (ru.bpc.mobilebank.bpc) et déclencher l'alarme, ainsi que pour bloquer les écrans noirs factices des malwares.\n\n" +
+                                "2. Protection absolue:\n• Aucun enregistrement de frappes (zéro keylogging).\n• Aucun mot de passe lu.\n• Aucune capture d'écran.\n• Zéro transmission sur Internet."
+                            },
+                            fontSize = 11.sp,
+                            lineHeight = 15.sp,
+                            color = Color.LightGray
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showAccessibilityDisclosureDialog = false
+                            baridiMobDetector.openAccessibilitySettings()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
+                    ) {
+                        Text(
+                            text = if (isArabic) "فهمت وموافق (Continuer)" else "Accepter & Continuer",
+                            color = Color.Black,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showAccessibilityDisclosureDialog = false }) {
+                        Text(if (isArabic) "إلغاء" else "Refuser")
+                    }
+                }
+            )
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        // 📩 إفصاح إذن الرسائل النصية البارز (Google Play SMS Disclosure)
+        // ══════════════════════════════════════════════════════════════════
+        if (showSmsDisclosureDialog) {
+            AlertDialog(
+                onDismissRequest = { showSmsDisclosureDialog = false },
+                title = {
+                    Text(
+                        text = if (isArabic) "📩 إفصاح إذن رسائل الـ OTP البنكية" else "📩 Déclaration d'accès aux SMS (Google Play)",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.5.sp
+                    )
+                },
+                text = {
+                    Text(
+                        text = if (isArabic) {
+                            "يطلب BaridiGuard إذن قراءة الرسائل (RECEIVE_SMS) فقط لحفظ نسخة مشفرة ومستقلة من كود التأكيد (OTP) الوارد من بريد الجزائر، لحمايته من الحذف الخفي الذي يقوم به التروجان المصرفي فور سرقة الأموال.\n\n" +
+                            "• لا يتم إرسال نصوص الرسائل لأي خادم.\n• يمكنك مراجعة ومسح الخزنة في أي وقت."
+                        } else {
+                            "BaridiGuard demande l'accès SMS (RECEIVE_SMS) exclusivement pour sauvegarder une copie locale sécurisée du code OTP d'Algérie Poste afin d'empêcher les trojans de le supprimer furtivement.\n\n" +
+                            "• Aucun SMS n'est transmis hors du téléphone.\n• Données sous contrôle exclusif de l'utilisateur."
+                        },
+                        fontSize = 11.5.sp,
+                        color = Color.LightGray
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showSmsDisclosureDialog = false
+                            onRequestSmsPermission()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = GoldAccent)
+                    ) {
+                        Text(
+                            text = if (isArabic) "موافق وتفعيل الإذن" else "Autoriser & Continuer",
+                            color = Color.Black,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showSmsDisclosureDialog = false }) {
+                        Text(if (isArabic) "إلغاء" else "Annuler")
+                    }
+                }
+            )
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        // 🔒 إفصاح مسؤول الجهاز البارز (Device Admin Disclosure)
+        // ══════════════════════════════════════════════════════════════════
+        if (showDeviceAdminDisclosureDialog) {
+            AlertDialog(
+                onDismissRequest = { showDeviceAdminDisclosureDialog = false },
+                title = {
+                    Text(
+                        text = if (isArabic) "🔒 إفصاح صلاحية مسؤول الجهاز (Anti-Kill)" else "🔒 Protection Administrateur d'Appareil",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.5.sp
+                    )
+                },
+                text = {
+                    Text(
+                        text = if (isArabic) {
+                            "تُستخدم صلاحية مسؤول الجهاز كدرع حماية ذاتية (Anti-Uninstall) فقط لمنع الفيروسات والبرمجيات الخبيثة من فرض الإيقاف على BaridiGuard أو حذفه خلسة في الخلفية.\n\n" +
+                            "• يمكنك إلغاء هذه الصلاحية في أي وقت من إعدادات الهاتف."
+                        } else {
+                            "L'autorisation administrateur est requise uniquement comme auto-défense contre la désinstallation forcée par les malwares bancaires.\n\n" +
+                            "• Vous pouvez révoquer cette permission à tout moment."
+                        },
+                        fontSize = 11.5.sp,
+                        color = Color.LightGray
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showDeviceAdminDisclosureDialog = false
+                            onRequestDeviceAdmin()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
+                    ) {
+                        Text(
+                            text = if (isArabic) "موافق وتفعيل الحماية" else "Activer la protection",
+                            color = Color.Black,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeviceAdminDisclosureDialog = false }) {
+                        Text(if (isArabic) "إلغاء" else "Annuler")
+                    }
+                }
+            )
         }
 
         // Police Forensic Dossier Modal
@@ -509,6 +766,7 @@ fun DashboardTab(
     onRequestSmsPermission: () -> Unit,
     onRequestDeviceAdmin: () -> Unit,
     onOpenAppDetails: () -> Unit,
+    onOpenPrivacyPolicy: () -> Unit,
     onStartScan: () -> Unit,
     onTriggerSiren: () -> Unit,
     onStopAlarm: () -> Unit,
@@ -954,6 +1212,51 @@ fun DashboardTab(
                     subtitle = if (isArabic) "منع الفيروس من فرض الإيقاف أو حذف التطبيق" else "Immunité contre la fermeture et suppression forcée",
                     active = isDeviceAdminActive
                 )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // ══════════════════════════════════════════════════════════════════
+        // ⚖️ إشعار إخلاء المسؤولية القانوني وعدم التبعية (Google Play Compliance)
+        // ══════════════════════════════════════════════════════════════════
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = GuardCardDark),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color.DarkGray),
+            shape = RoundedCornerShape(10.dp)
+        ) {
+            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = if (isArabic) "⚖️ إخلاء مسؤولية قانوني (Avis Légal):" else "⚖️ Avis Légal de Non-Affiliation :",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 11.sp,
+                        color = GoldLight
+                    )
+                }
+                Text(
+                    text = if (isArabic) {
+                        "BaridiGuard هو أداة أمنية سيبرانية مستقلة ومفتوحة المصدر مصممة لحماية المواطنين ضد الاحتيال المالي، وليس تطبيقاً رسمياً أو تابعاً لمؤسسة بريد الجزائر (Algérie Poste)."
+                    } else {
+                        "BaridiGuard est un outil de cybersécurité open-source indépendant protégeant les citoyens contre les malwares financiers, non affilié à l'établissement public Algérie Poste."
+                    },
+                    fontSize = 9.5.sp,
+                    color = Color.Gray,
+                    lineHeight = 13.sp
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Text(
+                        text = if (isArabic) "📜 سياسة الخصوصية وأمان البيانات ➔" else "📜 Politique de confidentialité ➔",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = EmeraldLight,
+                        modifier = Modifier.clickable { onOpenPrivacyPolicy() }
+                    )
+                }
             }
         }
     }

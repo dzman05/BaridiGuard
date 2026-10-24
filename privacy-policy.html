@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Politique de Confidentialité • BaridiGuard (حارس بريدي)</title>
+    <style>
+        :root {
+            --bg-color: #0B1315;
+            --card-bg: #142124;
+            --accent-green: #00E676;
+            --accent-gold: #FFD700;
+            --text-primary: #FFFFFF;
+            --text-secondary: #B0BEC5;
+            --border-color: #1E383C;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 860px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 35px;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .lang-switch {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            justify-content: flex-end;
+        }
+        .lang-btn {
+            background: #1e383c;
+            color: #fff;
+            border: 1px solid var(--accent-green);
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        h1, h2, h3 {
+            color: var(--accent-green);
+        }
+        h1 {
+            font-size: 26px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 12px;
+            margin-top: 0;
+        }
+        h2 {
+            font-size: 20px;
+            margin-top: 30px;
+            color: var(--accent-gold);
+        }
+        p, li {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+        .highlight-box {
+            background: rgba(0, 230, 118, 0.08);
+            border-right: 4px solid var(--accent-green);
+            border-left: 4px solid var(--accent-green);
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            color: var(--text-primary);
+        }
+        .disclaimer-box {
+            background: rgba(255, 215, 0, 0.08);
+            border: 1px solid var(--accent-gold);
+            padding: 14px 18px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        .section-ar {
+            direction: rtl;
+            text-align: right;
+            border-top: 2px dashed var(--border-color);
+            padding-top: 30px;
+            margin-top: 40px;
+        }
+        .badge {
+            display: inline-block;
+            background: rgba(0, 230, 118, 0.2);
+            color: var(--accent-green);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="lang-switch">
+        <a href="#francais" class="lang-btn">Français</a>
+        <a href="#arabe" class="lang-btn">العربية</a>
+    </div>
+
+    <!-- 🇫🇷 Version Française -->
+    <div id="francais">
+        <h1>Politique de Confidentialité • BaridiGuard</h1>
+        <p><strong>Dernière mise à jour :</strong> 24 Octobre 2026 | <strong>Version :</strong> 1.3.1</p>
+
+        <div class="disclaimer-box">
+            ⚖️ <strong>Avis légal et non-affiliation :</strong><br>
+            BaridiGuard (حارس بريدي) est une application utilitaire de sécurité open-source et indépendante conçue pour protéger les citoyens contre les malwares financiers. <strong>BaridiGuard n'est pas affilié, associé, autorisé ou soutenu officiellement par l'établissement public Algérie Poste ou l'application BaridiMob.</strong>
+        </div>
+
+        <div class="highlight-box">
+            🛡️ <strong>Principe Fondamental : Zéro Collecte de Données (100% Local)</strong><br>
+            BaridiGuard ne collecte, ne stocke sur aucun serveur, ne transmet et ne revend AUCUNE donnée personnelle ou bancaire. Toutes les analyses et détections sont effectuées <strong>strictement et exclusivement en local sur votre appareil Android</strong>.
+        </div>
+
+        <h2>1. Utilisation de l'API AccessibilityService (Service d'Accessibilité)</h2>
+        <p>Conformément aux exigences de Google Play relatives à l'API d'accessibilité :</p>
+        <ul>
+            <li><strong>Finalité unique :</strong> BaridiGuard utilise le service d'accessibilité uniquement pour détecter en temps réel le lancement de l'application bancaire officielle <code>ru.bpc.mobilebank.bpc</code> (BaridiMob) et pour intercepter les superpositions malveillantes (écrans noirs factices "Mise à jour en cours") déployées par les chevaux de Troie.</li>
+            <li><strong>Aucune capture de contenu :</strong> Le service n'enregistre aucune frappe au clavier (aucun keylogging), ne lit aucun mot de passe, ne modifie aucun paramètre système sans l'accord de l'utilisateur et ne capture aucun contenu d'écran.</li>
+            <li><strong>Consentement explicite :</strong> L'activation requiert une autorisation volontaire et explicite via un écran d'information préalable (Prominent Disclosure).</li>
+        </ul>
+
+        <h2>2. Accès aux SMS et Coffre-Fort OTP (<code>RECEIVE_SMS</code>)</h2>
+        <ul>
+            <li><strong>Finalité :</strong> BaridiGuard surveille les messages SMS entrants uniquement pour identifier les alertes et codes de confirmation (OTP) provenant d'Algérie Poste ou de transactions financières.</li>
+            <li><strong>Protection Anti-Suppression :</strong> Les codes OTP identifiés sont conservés dans un coffre-fort chiffré local (<code>OtpVaultStorage</code>) afin de permettre à l'utilisateur de vérifier sa transaction même si un malware tente d'effacer furtivement le SMS d'origine.</li>
+            <li><strong>Confidentialité :</strong> Aucun contenu de message n'est transféré via Internet. Le coffre-fort reste sous le contrôle exclusif de l'utilisateur qui peut le purger à tout instant.</li>
+        </ul>
+
+        <h2>3. Rôle d'Administrateur de l'Appareil (<code>Device Admin</code>)</h2>
+        <p>L'autorisation d'administrateur d'appareil est demandée uniquement comme mécanisme d'<strong>auto-défense (Anti-Kill & Anti-Désinstallation)</strong> afin d'empêcher les malwares et trojans de forcer l'arrêt ou la désinstallation furtive de BaridiGuard lors d'une attaque bancaire.</p>
+
+        <h2>4. Sécurité du Réseau et Coupe-Circuit (Kill-Switch)</h2>
+        <p>Le coupe-circuit réseau permet à l'utilisateur d'isoler manuellement ou en cas d'alerte critique la connexion Internet de son smartphone (Wi-Fi et données mobiles) pour stopper immédiatement toute fuite de fonds ou de données vers les serveurs de cybercriminels.</p>
+
+        <h2>5. Suppression des données et droits de l'utilisateur</h2>
+        <p>L'utilisateur peut à tout moment :</p>
+        <ul>
+            <li>Désactiver n'importe quelle permission dans les paramètres Android.</li>
+            <li>Supprimer l'intégralité des données en effaçant le stockage de l'application ou en désinstallant BaridiGuard (après désactivation du module Administrateur).</li>
+        </ul>
+
+        <h2>6. Contact et Code Source</h2>
+        <p>Projet open-source hébergé publiquement sur GitHub : <a href="https://github.com/dzman05/BaridiGuard" style="color: var(--accent-green);">https://github.com/dzman05/BaridiGuard</a></p>
+    </div>
+
+    <!-- 🇩🇿 Version Arabe -->
+    <div id="arabe" class="section-ar">
+        <h1>سياسة الخصوصية وحماية البيانات • تطبيق BaridiGuard (حارس بريدي)</h1>
+        <p><strong>تاريخ آخر تحديث:</strong> 24 أكتوبر 2026 | <strong>الإصدار:</strong> 1.3.1</p>
+
+        <div class="disclaimer-box">
+            ⚖️ <strong>إخلاء مسؤولية قانوني وعدم انتحال الصفة:</strong><br>
+            تطبيق BaridiGuard (حارس بريدي) هو أداة أمنية سيبرانية مستقلة ومفتوحة المصدر مصممة لحماية المواطنين الجزائريين من التروجان والاحتيال المالي. <strong>تطبيق BaridiGuard ليس تابعاً أو معتمداً أو ممثلاً رسمياً لمؤسسة بريد الجزائر أو لتطبيق بريدي موب الرسمي.</strong>
+        </div>
+
+        <div class="highlight-box">
+            🛡️ <strong>المبدأ الجوهري: عدم جمع أي بيانات إطلاقاً (معالجة محلية 100%)</strong><br>
+            لا يقوم BaridiGuard بجمع أو حفظ أو إرسال أو مشاركة أي معلومات شخصية أو مالية أو مصرفية مع أي جهة خارجية أو خوادم سحابية. كافة العمليات والفحوصات تجري <strong>داخلياً بنسبة 100% داخل هاتفك فقط وبشكل غير متصل بالإنترنت</strong>.
+        </div>
+
+        <h2>1. استخدام واجهة برمجة تطبيقات خدمة إمكانية الوصول (AccessibilityService API)</h2>
+        <p>وفقاً للوائح وسياسات Google Play المتعلقة بخدمات إمكانية الوصول:</p>
+        <ul>
+            <li><strong>الغاية المحددة:</strong> تُستخدم خدمة إمكانية الوصول حصراً لرصد لحظة تشغيل تطبيق الدفع الرسمي <code>ru.bpc.mobilebank.bpc</code> (بريدي موب) ولحظر النوافذ الخبيثة والتراكبات المعتمة (الشاشات السوداء المزيفة "جاري تحديث الهاتف") التي ينشئها التروجان.</li>
+            <li><strong>حظر جمع المحتوى:</strong> الخدمة لا تسجل ضربات المفاتيح، ولا تقرأ كلمات المرور، ولا تلتقط شاشات المستخدم، ولا تغير أي إعداد دون إذن صريح.</li>
+            <li><strong>الموافقة الصريحة:</strong> تتطلب الخدمة موافقة إرادية ومسبقة للمستخدم مع إفصاح بارز يوضح سبب استخدامها بدقة.</li>
+        </ul>
+
+        <h2>2. حماية الرسائل النصية وخزنة تأكيد الـ OTP (صلاحية <code>RECEIVE_SMS</code>)</h2>
+        <ul>
+            <li><strong>الهدف:</strong> فحص الرسائل الواردة ذات الصلة ببريد الجزائر والعمليات المالية بهدف حفظ نسخة مشفرة ومستقلة من كود التأكيد (OTP).</li>
+            <li><strong>منع الحذف الخفي:</strong> يتم تخزين الرمز في خزنة محلية آمنة (<code>OtpVaultStorage</code>) ليتمكن المواطن من رؤية الكود والتأكد من المعاملة حتى وإن قام الفيروس بمحاولة حذف الرسالة الأصلية فور وصولها.</li>
+            <li><strong>الخصوصية التامة:</strong> لا يتم إرسال نصوص الرسائل لأي جهة، وتبقى تحت الإشراف الكامل للمستخدم.</li>
+        </ul>
+
+        <h2>3. صلاحية مسؤول الجهاز (Device Administration)</h2>
+        <p>تُطلب هذه الصلاحية فقط كدرع <strong>حماية ذاتية (Anti-Kill & Anti-Uninstall)</strong> لمنع البرمجيات الخبيثة من فرض الإيقاف على BaridiGuard أو حذفه خفية في الخلفية أثناء تنفيذ سرقة الأموال.</p>
+
+        <h2>4. قاطع الإنترنت الطارئ (Kill-Switch)</h2>
+        <p>يتيح للمستخدم عزل الهاتف فوريًا وقطع كافة الاتصالات اللاسلكية (Wi-Fi وشبكة الهاتف المحمول) لقطع اتصال التروجان بغرفة التحكم الخاصة بالمخترقين ومنع تحويل الأموال.</p>
+
+        <h2>5. التحكم وحذف البيانات</h2>
+        <p>للمستخدم كامل الحرية في إلغاء أي إذن في أي وقت، ومسح الخزنة أو حذف التطبيق كاملاً بعد تعطيل خيار مسؤول الجهاز بكل بساطة.</p>
+
+        <h2>6. التواصل ومصدر التطبيق</h2>
+        <p>المشروع متاح بالكامل ومفتوح المصدر على منصة GitHub: <a href="https://github.com/dzman05/BaridiGuard" style="color: var(--accent-green);">https://github.com/dzman05/BaridiGuard</a></p>
+    </div>
+</div>
+
+</body>
+</html>

@@ -35,45 +35,45 @@ jobs:
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0"
 
-      - name: Build Debug APK
+      - name: Build Debug APK & Google Play App Bundle (AAB)
         working-directory: ./android-app
         run: |
-          gradle assembleDebug --stacktrace
+          gradle assembleDebug bundleDebug --stacktrace
 
-      - name: Copy & Rename APK
+      - name: Copy & Rename Outputs
         run: |
           mkdir -p release-output
-          cp android-app/app/build/outputs/apk/debug/app-debug.apk release-output/BaridiGuard-v1.3.0.apk
+          cp android-app/app/build/outputs/apk/debug/app-debug.apk release-output/BaridiGuard-v1.3.1.apk
+          cp android-app/app/build/outputs/bundle/debug/app-debug.aab release-output/BaridiGuard-v1.3.1.aab
 
-      - name: Upload APK as Workflow Artifact
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: BaridiGuard-v1.3.0-APK
-          path: release-output/BaridiGuard-v1.3.0.apk
+          name: BaridiGuard-v1.3.1-Package
+          path: release-output/*
           retention-days: 30
 
-      - name: Create GitHub Release with APK
+      - name: Create GitHub Release with APK and AAB
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.3.0
-          name: "BaridiGuard v1.3.0 (OTP Vault, One-Tap Shield Activator & Full Defense Suite)"
+          tag_name: v1.3.1
+          name: "BaridiGuard v1.3.1 (Google Play Compliance, Prominent Disclosures & App Bundle AAB)"
           body: |
-            ## 🛡️ BaridiGuard v1.3.0 - حارس بريدي (الدرع الشامل، معالج التفعيل السريع وخزنة OTP)
+            ## 🛡️ BaridiGuard v1.3.1 - متوافق بالكامل مع معايير Google Play ومتطلبات النشر
             
-            ### ✨ الجديد والأساسي في هذا الإصدار الشامل (Nouveautés v1.3.0):
-            - 📩 **خزنة الرسائل وأكواد التأكيد (OTP Vault) بأسبقية قصوى (Priority 999)**:
-              حفظ نسخة مشفرة ومستقلة لرسائل بريد الجزائر لمنع الفيروس من حذفها خفية، مع زر نسخ فوري واختبار المحاكاة.
-            - ⚡ **معالج التفعيل والتسطيب السريع (One-Tap Shield Activator 1-2-3-4)**:
-              إرشاد خطوة بخطوة لجميع المستخدمين لتفعيل الصلاحيات وحل مشكلة الإعدادات المقيدة والشفافة (Paramètres restreints في أندرويد 13/14).
-            - 🎯 **رصد وتشغيل تطبيق بريدي موب الرسمي من متجر جوجل (`ru.bpc.mobilebank.bpc`)**.
-            - 🛡️ **تفعيل دروع الحماية الـ 5 كاملة**:
-              1. رادار تشغيل بريدي موب
-              2. خزنة تأكيد الرسائل OTP ومنع حذفها
-              3. كاشف الشاشة السوداء والتراكب الخبيث ("يتم تحديث الهاتف...")
-              4. قاطع الإنترنت التلقائي (Kill-Switch)
-              5. درع الحماية الذاتية ومسؤول الجهاز (Anti-Kill Device Admin)
-            - 🛑 **إيقاف صفارة الإنذار التلقائي (3.5 ثوانٍ) واليدوي الفوري**.
-          files: release-output/BaridiGuard-v1.3.0.apk
+            ### ✨ الجديد في هذا الإصدار (Google Play Compliance):
+            - 📦 **توفير حزمة Google Play الرسمية (`BaridiGuard-v1.3.1.aab`)**:
+              جاهزة مباشرة للرفع على متجر Google Play Console بصيغة Android App Bundle.
+            - 📜 **الإفصاح البارز الإلزامي (In-App Prominent Disclosures)**:
+              شاشات إفصاح مسبقة قبل طلب صلاحية إمكانية الوصول (Accessibility)، والرسائل (SMS OTP)، ومسؤول الجهاز (Device Admin).
+            - ⚖️ **إخلاء المسؤولية القانوني وعدم انتحال الصفة (Non-Affiliation Disclaimer)**:
+              توضيح رسمي صريح داخل التطبيق بأنه أداة أمنية سيبرانية مستقلة لحماية المواطنين، غير تابعة لبريد الجزائر.
+            - 🌐 **رابط سياسة الخصوصية الحي والمعتمد (Privacy Policy)**:
+              منشور ومتاح عبر `privacy-policy.html` على GitHub لربطه في لوحة تحكم المتجر.
+            - 📱 **ملف APK للمستخدمين العاديين (`BaridiGuard-v1.3.1.apk`)** للتثبيت المباشر.
+          files: |
+            release-output/BaridiGuard-v1.3.1.apk
+            release-output/BaridiGuard-v1.3.1.aab
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
