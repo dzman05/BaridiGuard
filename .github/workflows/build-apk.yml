@@ -38,19 +38,7 @@ jobs:
       - name: Build Debug APK
         working-directory: ./android-app
         run: |
-          gradle assembleDebug --stacktrace > ../build.log 2>&1 || true
-
-      - name: Push Log to GitHub Branch for Inspection
-        if: always()
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -B debug-log
-          grep -B 5 -A 25 "FAILURE:" build.log > build-summary.txt || tail -n 100 build.log > build-summary.txt
-          git add build-summary.txt
-          git commit -m "build log summary" || true
-          git push -f origin debug-log || true
-          grep "BUILD SUCCESSFUL" build.log || exit 1
+          gradle assembleDebug --stacktrace
 
       - name: Copy & Rename APK
         run: |
@@ -71,9 +59,14 @@ jobs:
           tag_name: v1.0.0
           name: "BaridiGuard v1.0.0 (Official APK)"
           body: |
-            ## 🛡️ BaridiGuard v1.0.0 - حارس بريدي
+            ## 🛡️ BaridiGuard v1.0.0 - حارس بريدي (APK)
             
             تطبيق الحماية الاستباقية لتطبيق **BaridiMob** والبطاقة الذهبية في الجزائر.
+            
+            ### كيفية التثبيت على الهاتف:
+            1. اضغط على الرابط بالأسفل لتحميل **`BaridiGuard-v1.0.apk`**.
+            2. افتح الملف واضغط على **تثبيت (Installer)**.
+            3. امنح إذن مسؤول الجهاز لحماية التطبيق من الإيقاف بواسطة التروجانات.
           files: release-output/BaridiGuard-v1.0.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
