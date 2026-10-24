@@ -43,32 +43,31 @@ jobs:
       - name: Copy & Rename APK
         run: |
           mkdir -p release-output
-          cp android-app/app/build/outputs/apk/debug/app-debug.apk release-output/BaridiGuard-v1.2.2.apk
+          cp android-app/app/build/outputs/apk/debug/app-debug.apk release-output/BaridiGuard-v1.2.3.apk
 
       - name: Upload APK as Workflow Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: BaridiGuard-v1.2.2-APK
-          path: release-output/BaridiGuard-v1.2.2.apk
+          name: BaridiGuard-v1.2.3-APK
+          path: release-output/BaridiGuard-v1.2.3.apk
           retention-days: 30
 
       - name: Create GitHub Release with APK
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.2.2
-          name: "BaridiGuard v1.2.2 (Smart Auto-Stop Alarm & One-Time Launch Guardian)"
+          tag_name: v1.2.3
+          name: "BaridiGuard v1.2.3 (Accessibility Quick-Activation & In-App Launch Tester)"
           body: |
-            ## 🛡️ BaridiGuard v1.2.2 - حارس بريدي (إيقاف الإنذار التلقائي واليدوي)
+            ## 🛡️ BaridiGuard v1.2.3 - حارس بريدي (تفعيل الحراسة الفورية واختبار الفتح)
             
-            ### ✨ الجديد في هذا التحديث (Nouveautés v1.2.2):
-            - ⏱️ **إيقاف الإنذار التلقائي (Auto-Stop après 3.5s)**:
-              توقف صفارة الإنذار تلقائياً بعد 3.5 ثوانٍ دون الاستمرار اللانهائي.
-            - 🛑 **زر إيقاف الإنذار الفوري (Bouton Arrêt Immédiat)**:
-              ظهور زر أحمر بارز في الواجهة الرئيسية لإسكات الإنذار فوراً بنقرة واحدة عند الرغبة.
-            - 🎯 **منع تكرار الإنذار أثناء استخدام بريدي موب**:
-              يطلق الإنذار مرة واحدة فقط عند فتح التطبيق، ولا يتكرر أثناء تنقل المستخدم داخل بريدي موب.
-            - 🎨 **أيقونات FontAwesome وتضمين بريدي ويب الرسمي**.
-          files: release-output/BaridiGuard-v1.2.2.apk
+            ### ✨ الجديد في هذا التحديث (Nouveautés v1.2.3):
+            - 🚀 **زر تفعيل الحراسة الفورية في إمكانية الوصول (Accessibilité)**:
+              تفعيل خدمة BaridiGuard بنقرة واحدة لتمكين الهاتف من رصد تطبيق بريدي موب فورياً دون استهلاك للبطارية.
+            - 📱 **زر فتح بريدي موب المباشر للاختبار**:
+              زر مدمج لتشغيل بريدي موب من داخل حارس بريدي لمشاهدة إطلاق الإنذار تلقائياً في ثانية واحدة.
+            - 🔔 **طلب إذن الإشعارات لأندرويد 13 فما فوق**: لضمان عدم حجب التنبيهات من طرف النظام.
+            - 🛑 **إيقاف الإنذار التلقائي واليدوي وأيقونات FontAwesome**.
+          files: release-output/BaridiGuard-v1.2.3.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

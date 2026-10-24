@@ -38,6 +38,46 @@ class BaridiMobLaunchDetector(private val context: Context) {
         "dz.poste.baridinet"
     )
 
+    fun isBankingPackage(packageName: String): Boolean {
+        val lower = packageName.lowercase()
+        if (lower.contains("baridiguard")) return false
+        return lower.contains("baridimob") ||
+               lower == "dz.poste.eccp" ||
+               lower == "dz.poste.baridinet" ||
+               (lower.startsWith("dz.poste.") && !lower.contains("baridiguard")) ||
+               targetBankingPackages.contains(packageName)
+    }
+
+    /**
+     * التحقق هل خدمة إمكانية الوصول لحارس بريدي مفعلة
+     */
+    fun isAccessibilityServiceEnabled(): Boolean {
+        return try {
+            val enabledServices = Settings.Secure.getString(
+                context.contentResolver,
+                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+            ) ?: return false
+            enabledServices.contains(context.packageName) || 
+            enabledServices.contains("BaridiAccessibilityGuardService")
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    /**
+     * فتح شاشة إعدادات إمكانية الوصول
+     */
+    fun openAccessibilitySettings() {
+        try {
+            val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     companion object {
         private var wasBaridiMobForeground = false
         private var lastAlertTime: Long = 0
@@ -118,7 +158,7 @@ class BaridiMobLaunchDetector(private val context: Context) {
                         }
                     }
 
-                    if (lastForegroundPackage != null && targetBankingPackages.contains(lastForegroundPackage)) {
+                    if (lastForegroundPackage != null && isBankingPackage(lastForegroundPackage)) {
                         return true
                     }
                 }
@@ -131,7 +171,7 @@ class BaridiMobLaunchDetector(private val context: Context) {
                 for (processInfo in runningProcesses) {
                     if (processInfo.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
                         for (activePkg in processInfo.pkgList) {
-                            if (targetBankingPackages.contains(activePkg)) {
+                            if (isBankingPackage(activePkg)) {
                                 return true
                             }
                         }

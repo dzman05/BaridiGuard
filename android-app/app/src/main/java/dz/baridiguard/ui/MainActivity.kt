@@ -56,6 +56,13 @@ class MainActivity : ComponentActivity() {
         forensicReportGenerator = ForensicReportGenerator(this)
         baridiMobDetector = BaridiMobLaunchDetector(this)
 
+        // طلب إذن الإشعارات لأندرويد 13 فما فوق لضمان عمل الخدمة بدون انقطاع
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 101)
+            }
+        }
+
         startProtectionService()
 
         setContent {
@@ -68,9 +75,23 @@ class MainActivity : ComponentActivity() {
                     forensics = forensicReportGenerator,
                     baridiMobDetector = baridiMobDetector,
                     onPlaySiren = { playPureCyberAlarmSiren() },
-                    onCall1530 = { callAlgeriePosteEmergency() }
+                    onCall1530 = { callAlgeriePosteEmergency() },
+                    onLaunchBaridiMob = { launchBaridiMobApp() }
                 )
             }
+        }
+    }
+
+    private fun launchBaridiMobApp() {
+        try {
+            val pm = packageManager
+            val intent = pm.getLaunchIntentForPackage("dz.poste.baridimob")
+                ?: pm.getLaunchIntentForPackage("com.baridimob")
+                ?: Intent(Intent.ACTION_VIEW, Uri.parse("https://baridiweb.poste.dz/"))
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            startActivity(intent)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
@@ -106,7 +127,8 @@ fun MainAppScreen(
     forensics: ForensicReportGenerator,
     baridiMobDetector: BaridiMobLaunchDetector,
     onPlaySiren: () -> Unit,
-    onCall1530: () -> Unit
+    onCall1530: () -> Unit,
+    onLaunchBaridiMob: () -> Unit
 ) {
     // In-App Language Toggle: true = Arabic (RTL), false = French (LTR)
     var isArabic by remember { mutableStateOf(true) }
@@ -147,7 +169,7 @@ fun MainAppScreen(
                                         color = EmeraldDark
                                     ) {
                                         Text(
-                                            "v1.2.2",
+                                            "v1.2.3",
                                             modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
                                             fontSize = 9.sp,
                                             fontWeight = FontWeight.Bold,
@@ -156,7 +178,7 @@ fun MainAppScreen(
                                     }
                                 }
                                 Text(
-                                    text = if (isArabic) "حارس بريدي • رادار الإنذار" else "Bouclier BaridiMob • v1.2.2",
+                                    text = if (isArabic) "حارس بريدي • رادار الإنذار" else "Bouclier BaridiMob • v1.2.3",
                                     fontSize = 10.5.sp,
                                     color = EmeraldLight
                                 )
@@ -247,6 +269,7 @@ fun MainAppScreen(
                         securityScore = securityScore,
                         isScanning = isScanning,
                         isAlarmPlaying = isAlarmPlaying,
+                        isAccessibilityActive = baridiMobDetector.isAccessibilityServiceEnabled(),
                         hasUsagePermission = baridiMobDetector.hasUsageStatsPermission(),
                         onStartScan = {
                             coroutineScope.launch {
@@ -292,7 +315,11 @@ fun MainAppScreen(
                         },
                         onOpenUsageSettings = {
                             baridiMobDetector.openUsageAccessSettings()
-                        }
+                        },
+                        onOpenAccessibility = {
+                            baridiMobDetector.openAccessibilitySettings()
+                        },
+                        onLaunchBaridiMob = onLaunchBaridiMob
                     )
                     1 -> PhishingScannerTab(isArabic, phishingScanner)
                     2 -> ForensicsTab(
@@ -398,13 +425,16 @@ fun DashboardTab(
     securityScore: Int,
     isScanning: Boolean,
     isAlarmPlaying: Boolean,
+    isAccessibilityActive: Boolean,
     hasUsagePermission: Boolean,
     onStartScan: () -> Unit,
     onTriggerSiren: () -> Unit,
     onStopAlarm: () -> Unit,
     onTriggerKillSwitch: () -> Unit,
     onTestBaridiAlarm: () -> Unit,
-    onOpenUsageSettings: () -> Unit
+    onOpenUsageSettings: () -> Unit,
+    onOpenAccessibility: () -> Unit,
+    onLaunchBaridiMob: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -549,42 +579,112 @@ fun DashboardTab(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Test BaridiMob Launch Alarm Button
-        Button(
-            onClick = onTestBaridiAlarm,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(46.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = GuardCardDark),
-            border = androidx.compose.foundation.BorderStroke(1.dp, EmeraldLight),
-            shape = RoundedCornerShape(10.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    painter = painterResource(id = R.drawable.fa_triangle_exclamation),
-                    contentDescription = null,
-                    tint = EmeraldLight,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = if (isArabic) "🚨 تجربة صفارة إنذار بريدي موب (Test)" else "🚨 Tester l'alarme ouverture BaridiMob",
-                    fontSize = 12.sp,
-                    color = EmeraldLight,
-                    fontWeight = FontWeight.Bold
-                )
+        // Action Buttons: Test Alarm & Launch BaridiMob
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(
+                onClick = onTestBaridiAlarm,
+                modifier = Modifier.weight(1f).height(46.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = GuardCardDark),
+                border = androidx.compose.foundation.BorderStroke(1.dp, EmeraldLight),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.fa_triangle_exclamation),
+                        contentDescription = null,
+                        tint = EmeraldLight,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = if (isArabic) "🚨 تجربة الإنذار" else "🚨 Test Alarme",
+                        fontSize = 11.sp,
+                        color = EmeraldLight,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            Button(
+                onClick = onLaunchBaridiMob,
+                modifier = Modifier.weight(1f).height(46.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = EmeraldDark),
+                border = androidx.compose.foundation.BorderStroke(1.dp, EmeraldLight),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.fa_house),
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = if (isArabic) "📱 فتح بريدي موب" else "📱 Ouvrir BaridiMob",
+                        fontSize = 11.sp,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
 
-        // Usage Access Permission Banner if not yet granted
-        if (!hasUsagePermission) {
-            Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Accessibility & Usage Permission Status Card
+        if (!isAccessibilityActive && !hasUsagePermission) {
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onOpenUsageSettings() },
+                modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = DangerBg),
-                border = androidx.compose.foundation.BorderStroke(1.dp, GoldAccent),
+                border = androidx.compose.foundation.BorderStroke(1.5.dp, GoldAccent),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.fa_triangle_exclamation),
+                            contentDescription = null,
+                            tint = GoldAccent,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (isArabic) "⚠️ رادار بريدي موب غير مفعل بعد!" else "⚠️ Radar BaridiMob non activé !",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.5.sp,
+                            color = Color.White
+                        )
+                    }
+                    Text(
+                        text = if (isArabic) {
+                            "لكي يستشعر الهاتف فتح تطبيق بريدي موب ويطلق الإنذار فوراً، يرجى تفعيل BaridiGuard في إمكانية الوصول (Accessibilité):"
+                        } else {
+                            "Pour que le téléphone détecte l'ouverture de BaridiMob, activez le service BaridiGuard dans Accessibilité :"
+                        },
+                        fontSize = 10.sp,
+                        color = Color.LightGray
+                    )
+                    Button(
+                        onClick = onOpenAccessibility,
+                        modifier = Modifier.fillMaxWidth().height(42.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = GoldAccent),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = if (isArabic) "👉 اضغط هنا لتفعيل الحراسة (إمكانية الوصول)" else "👉 Activer dans Accessibilité",
+                            color = Color.Black,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.5.sp
+                        )
+                    }
+                }
+            }
+        } else {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = GuardCardDark),
+                border = androidx.compose.foundation.BorderStroke(1.dp, EmeraldLight),
                 shape = RoundedCornerShape(10.dp)
             ) {
                 Row(
@@ -592,21 +692,21 @@ fun DashboardTab(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.fa_triangle_exclamation),
+                        painter = painterResource(id = R.drawable.fa_shield_halved),
                         contentDescription = null,
-                        tint = GoldAccent,
-                        modifier = Modifier.size(24.dp)
+                        tint = EmeraldLight,
+                        modifier = Modifier.size(22.dp)
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
                         Text(
-                            text = if (isArabic) "⚠️ اضغط هنا لتفعيل رادار بريدي موب التلقائي" else "⚠️ Cliquez pour activer le radar BaridiMob",
+                            text = if (isArabic) "✅ رادار بريدي موب نشط وجاهز 100%" else "✅ Radar BaridiMob actif & prêt",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 11.5.sp,
-                            color = Color.White
+                            fontSize = 12.sp,
+                            color = EmeraldLight
                         )
                         Text(
-                            text = if (isArabic) "إذن مراقبة الاستخدام ضروري لرصد فتح بريدي موب فورياً" else "Accès à l'utilisation requis pour détecter BaridiMob",
+                            text = if (isArabic) "سيطلق صفارة الإنذار فوراً عند تشغيل تطبيق بريدي موب" else "L'alarme se déclenchera dès l'ouverture de BaridiMob",
                             fontSize = 9.5.sp,
                             color = Color.LightGray
                         )

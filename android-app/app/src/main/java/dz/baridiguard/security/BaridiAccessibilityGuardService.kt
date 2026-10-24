@@ -30,8 +30,9 @@ class BaridiAccessibilityGuardService : AccessibilityService() {
 
         if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
             val pkgName = event.packageName?.toString() ?: return
+            val detector = BaridiMobLaunchDetector(applicationContext)
 
-            if (targetBankingPackages.contains(pkgName)) {
+            if (detector.isBankingPackage(pkgName)) {
                 // انطلاق جديد فقط لأول مرة يدخل فيها التطبيق
                 if (!isInsideBankingApp) {
                     isInsideBankingApp = true
@@ -39,7 +40,7 @@ class BaridiAccessibilityGuardService : AccessibilityService() {
                     if (now - lastTriggerTime > cooldownMs) {
                         lastTriggerTime = now
                         // إرسال الإشعار وتشغيل الإنذار المنضبط (لمدة 3.5 ثانية فقط)
-                        BaridiMobLaunchDetector(applicationContext).triggerBaridiMobSecurityAlert(true)
+                        detector.triggerBaridiMobSecurityAlert(true)
                     }
                 }
             } else {
