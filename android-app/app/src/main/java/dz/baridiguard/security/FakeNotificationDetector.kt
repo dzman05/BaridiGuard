@@ -108,16 +108,16 @@ object FakeNotificationDetector {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notification = NotificationCompat.Builder(context, BaridiGuardApp.CHANNEL_CRITICAL_ALERTS)
+        val notification = NotificationCompat.Builder(context, BaridiGuardApp.CHANNEL_THREAT_ALERTS)
             .setSmallIcon(R.drawable.ic_launcher)
-            .setContentTitle("🚨 تحذير: رصد إشعار خصم مزيف ينتحل بريدي موب!")
-            .setContentText("التطبيق المشبوه ($pkgName) أرسل إشعاراً كاذباً لاستدراجك لفتح حسابك!")
+            .setContentTitle("تحذير أمني: رصد إشعار خصم مزيف ينتحل بريدي موب")
+            .setContentText("التطبيق المشبوه ($pkgName) أرسل إشعاراً كاذباً لاستدراجك لفتح حسابك")
             .setStyle(
                 NotificationCompat.BigTextStyle().bigText(
-                    "⚠️ محاولة تصيد احتيالي نشطة:\n\n" +
+                    "محاولة تصيد احتيالي نشطة:\n\n" +
                     "التطبيق المشبوه: $pkgName\n" +
                     "نص الإشعار المزيف: $text\n\n" +
-                    "🛑 احذر: لم يتم خصم أي أموال! هذا فخ لدفعك لفتح بريدي موب بينما التروجان ينشط في الخلفية. لا تفتح بريدي موب الآن!"
+                    "تنبيه: لم يتم خصم أي أموال من حسابك. هذا فخ لإثارة الذعر ودفعك لفتح بريدي موب بينما البرمجية الخبيثة تنشط في الخلفية. لا تفتح بريدي موب الآن."
                 )
             )
             .setPriority(NotificationCompat.PRIORITY_MAX)
