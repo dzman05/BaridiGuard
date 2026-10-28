@@ -80,10 +80,22 @@ class OtpVaultReceiver : BroadcastReceiver() {
         // 1. حفظ الرسالة المشفرة فوراً في الخزنة المستقلة المحصنة ضد الحذف
         OtpVaultStorage.saveOtp(context, sender, otp, fullBody)
 
-        // 2. تشغيل صوت إنذار أمني قوي ومسموع لمدة 3.5 ثوانٍ
+        // 2. إذا احتوت الرسالة على رقم حساب مستفيد (RIP 20 رقماً)، يتم تسجيله في الصندوق الأسود فوراً
+        val extractedRip = RipBlackboxStorage.extractAlgerianRip(fullBody)
+        val extractedAmount = RipBlackboxStorage.extractAmount(fullBody) ?: "غير محدد"
+        if (extractedRip != null) {
+            RipBlackboxStorage.recordSuspiciousRip(
+                context = context,
+                ripNumber = extractedRip,
+                amountDzd = extractedAmount,
+                source = "رسالة تأكيد SMS (Message OTP)"
+            )
+        }
+
+        // 3. تشغيل صوت إنذار أمني قوي ومسموع لمدة 3.5 ثوانٍ
         EmergencyAlarmPlayer.playAudibleAlarm(context, 3500)
 
-        // 3. إظهار إشعار فوري ذو أولوية قصوى
+        // 4. إظهار إشعار فوري ذو أولوية قصوى
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra("EXTRA_OTP", otp)

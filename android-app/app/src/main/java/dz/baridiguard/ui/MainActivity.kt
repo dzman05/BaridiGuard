@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -200,12 +201,17 @@ fun MainAppScreen(
     onCall1530: () -> Unit,
     onLaunchBaridiMob: () -> Unit
 ) {
+    val context = LocalContext.current
     var isArabic by remember { mutableStateOf(true) }
     var selectedTab by remember { mutableStateOf(0) }
     var isScanning by remember { mutableStateOf(false) }
     var isAlarmPlaying by remember { mutableStateOf(false) }
     var securityScore by remember { mutableStateOf(98) }
     
+    // Drawer State for Menu Hamburger
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val coroutineScope = rememberCoroutineScope()
+
     // Modals & Prominent Disclosures for Google Play Compliance
     var showEmergencyDialog by remember { mutableStateOf(false) }
     var showDossierDialog by remember { mutableStateOf(false) }
@@ -215,235 +221,387 @@ fun MainAppScreen(
     var showDeviceAdminDisclosureDialog by remember { mutableStateOf(false) }
 
     var generatedReportText by remember { mutableStateOf("") }
-    val coroutineScope = rememberCoroutineScope()
 
     val layoutDirection = if (isArabic) LayoutDirection.Rtl else LayoutDirection.Ltr
 
     CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
+        ModalNavigationDrawer(
+            drawerState = drawerState,
+            drawerContent = {
+                ModalDrawerSheet(
+                    drawerContainerColor = GuardSurfaceDark,
+                    modifier = Modifier.width(310.dp)
+                ) {
+                    // Drawer Header
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(GuardCardDark)
+                            .padding(20.dp)
+                    ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Image(
                                 painter = painterResource(id = R.drawable.ic_launcher),
-                                contentDescription = "Logo",
+                                contentDescription = null,
                                 modifier = Modifier
-                                    .size(38.dp)
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .border(1.5.dp, EmeraldLight, RoundedCornerShape(10.dp))
+                                    .size(46.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .border(2.dp, EmeraldLight, RoundedCornerShape(12.dp))
                             )
-                            Spacer(modifier = Modifier.width(10.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
                             Column {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text("BARIDIGUARD", fontWeight = FontWeight.Black, fontSize = 15.sp, color = Color.White)
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Surface(
-                                        shape = RoundedCornerShape(4.dp),
-                                        color = EmeraldDark
-                                    ) {
-                                        Text(
-                                            "v1.0.0",
-                                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
-                                            fontSize = 9.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = EmeraldLight
-                                        )
-                                    }
-                                }
                                 Text(
-                                    text = if (isArabic) "حارس بريدي • الدرع الشامل" else "Bouclier BaridiMob • v1.0.0",
-                                    fontSize = 10.5.sp,
+                                    text = "BARIDIGUARD",
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 17.sp,
+                                    color = Color.White
+                                )
+                                Text(
+                                    text = if (isArabic) "حارس بريدي • الإصدار 1.0.0" else "Bouclier BaridiMob • v1.0.0",
+                                    fontSize = 11.sp,
                                     color = EmeraldLight
                                 )
                             }
                         }
-                    },
-                    actions = {
-                        // Privacy & Compliance Icon Button
-                        IconButton(onClick = { showPrivacyDialog = true }) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.fa_shield_halved),
-                                contentDescription = "Confidentialité",
-                                tint = EmeraldLight,
-                                modifier = Modifier.size(19.dp)
-                            )
-                        }
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = if (isArabic) {
+                                "درع الحماية المصرفية ومكافحة التروجان"
+                            } else {
+                                "Défense bancaire & anti-trojan local"
+                            },
+                            fontSize = 10.5.sp,
+                            color = Color.LightGray
+                        )
+                    }
 
-                        // Language Switcher [ 🇩🇿 AR | 🇫🇷 FR ]
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = GuardCardDark,
-                            border = androidx.compose.foundation.BorderStroke(1.dp, EmeraldLight.copy(alpha = 0.5f)),
-                            modifier = Modifier
-                                .padding(horizontal = 4.dp)
-                                .clickable { isArabic = !isArabic }
-                        ) {
-                            Text(
-                                text = if (isArabic) "🇫🇷 FR" else "🇩🇿 AR",
-                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp),
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        }
+                    HorizontalDivider(color = GuardCardDark, thickness = 1.dp)
 
-                        // Emergency 1530 Call
-                        IconButton(onClick = { showEmergencyDialog = true }) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.fa_triangle_exclamation),
-                                contentDescription = "Urgence",
-                                tint = DangerRed,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = GuardSurfaceDark)
-                )
-            },
-            bottomBar = {
-                NavigationBar(containerColor = GuardSurfaceDark) {
-                    NavigationBarItem(
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Drawer Items
+                    NavigationDrawerItem(
+                        icon = { Icon(painterResource(id = R.drawable.fa_house), contentDescription = null, modifier = Modifier.size(18.dp), tint = EmeraldLight) },
+                        label = { Text(if (isArabic) "الرئيسية ومعالج الدروع" else "Accueil & Guide 1-2-3", fontSize = 12.sp) },
                         selected = selectedTab == 0,
-                        onClick = { selectedTab = 0 },
-                        icon = { 
-                            Icon(
-                                painter = painterResource(id = R.drawable.fa_house),
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp),
-                                tint = if (selectedTab == 0) EmeraldLight else Color.Gray
-                            ) 
+                        onClick = {
+                            selectedTab = 0
+                            coroutineScope.launch { drawerState.close() }
                         },
-                        label = { Text(if (isArabic) "الرئيسية" else "Accueil", fontSize = 10.5.sp) }
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
                     )
-                    NavigationBarItem(
+
+                    NavigationDrawerItem(
+                        icon = { Icon(painterResource(id = R.drawable.fa_envelope), contentDescription = null, modifier = Modifier.size(18.dp), tint = EmeraldLight) },
+                        label = { Text(if (isArabic) "خزنة تأكيد الرسائل (OTP Vault)" else "Coffre-Fort des Codes OTP", fontSize = 12.sp) },
                         selected = selectedTab == 1,
-                        onClick = { selectedTab = 1 },
-                        icon = { 
-                            Icon(
-                                painter = painterResource(id = R.drawable.fa_envelope),
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp),
-                                tint = if (selectedTab == 1) EmeraldLight else Color.Gray
-                            ) 
+                        onClick = {
+                            selectedTab = 1
+                            coroutineScope.launch { drawerState.close() }
                         },
-                        label = { Text(if (isArabic) "خزنة OTP" else "Coffre OTP", fontSize = 10.5.sp) }
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
                     )
-                    NavigationBarItem(
+
+                    NavigationDrawerItem(
+                        icon = { Icon(painterResource(id = R.drawable.fa_credit_card), contentDescription = null, modifier = Modifier.size(18.dp), tint = GoldLight) },
+                        label = { Text(if (isArabic) "سجل الـ RIP المشبوهة (الصندوق الأسود)" else "Boîte Noire des RIP Suspects", fontSize = 12.sp) },
                         selected = selectedTab == 2,
-                        onClick = { selectedTab = 2 },
-                        icon = { 
-                            Icon(
-                                painter = painterResource(id = R.drawable.fa_magnifying_glass),
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp),
-                                tint = if (selectedTab == 2) EmeraldLight else Color.Gray
-                            ) 
+                        onClick = {
+                            selectedTab = 2
+                            coroutineScope.launch { drawerState.close() }
                         },
-                        label = { Text(if (isArabic) "الروابط" else "Liens", fontSize = 10.5.sp) }
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
                     )
-                    NavigationBarItem(
+
+                    NavigationDrawerItem(
+                        icon = { Icon(painterResource(id = R.drawable.fa_triangle_exclamation), contentDescription = null, modifier = Modifier.size(18.dp), tint = DangerRed) },
+                        label = { Text(if (isArabic) "رادار إشعارات الخصم المزيفة" else "Faux Avis de Débit BaridiMob", fontSize = 12.sp) },
                         selected = selectedTab == 3,
-                        onClick = { selectedTab = 3 },
-                        icon = { 
-                            Icon(
-                                painter = painterResource(id = R.drawable.fa_scale_balanced),
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp),
-                                tint = if (selectedTab == 3) EmeraldLight else Color.Gray
-                            ) 
+                        onClick = {
+                            selectedTab = 3
+                            coroutineScope.launch { drawerState.close() }
                         },
-                        label = { Text(if (isArabic) "قضائي" else "Justice", fontSize = 10.5.sp) }
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
+                    )
+
+                    NavigationDrawerItem(
+                        icon = { Icon(painterResource(id = R.drawable.fa_magnifying_glass), contentDescription = null, modifier = Modifier.size(18.dp), tint = EmeraldLight) },
+                        label = { Text(if (isArabic) "فاحص روابط الاحتيال" else "Bouclier Anti-Hameçonnage", fontSize = 12.sp) },
+                        selected = selectedTab == 4,
+                        onClick = {
+                            selectedTab = 4
+                            coroutineScope.launch { drawerState.close() }
+                        },
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
+                    )
+
+                    NavigationDrawerItem(
+                        icon = { Icon(painterResource(id = R.drawable.fa_scale_balanced), contentDescription = null, modifier = Modifier.size(18.dp), tint = GoldAccent) },
+                        label = { Text(if (isArabic) "ملف الشكوى الجنائية (الدرك/الشرطة)" else "Dossier Judiciaire & Preuves", fontSize = 12.sp) },
+                        selected = selectedTab == 5,
+                        onClick = {
+                            selectedTab = 5
+                            coroutineScope.launch { drawerState.close() }
+                        },
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
+                    )
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = GuardCardDark)
+
+                    NavigationDrawerItem(
+                        icon = { Icon(painterResource(id = R.drawable.fa_shield_halved), contentDescription = null, modifier = Modifier.size(18.dp), tint = EmeraldLight) },
+                        label = { Text(if (isArabic) "سياسة الخصوصية وأمان البيانات" else "Politique de Confidentialité", fontSize = 12.sp) },
+                        selected = false,
+                        onClick = {
+                            coroutineScope.launch { drawerState.close() }
+                            showPrivacyDialog = true
+                        },
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
+                    )
+
+                    NavigationDrawerItem(
+                        icon = { Icon(painterResource(id = R.drawable.fa_bolt), contentDescription = null, modifier = Modifier.size(18.dp), tint = DangerRed) },
+                        label = { Text(if (isArabic) "طوارئ تجميد الحساب 1530" else "Urgence 1530 - Gel du Compte", fontSize = 12.sp) },
+                        selected = false,
+                        onClick = {
+                            coroutineScope.launch { drawerState.close() }
+                            showEmergencyDialog = true
+                        },
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
                     )
                 }
-            },
-            containerColor = GuardBgDark
-        ) { paddingValues ->
-            Box(modifier = Modifier.padding(paddingValues)) {
-                when (selectedTab) {
-                    0 -> DashboardTab(
-                        isArabic = isArabic,
-                        securityScore = securityScore,
-                        isScanning = isScanning,
-                        isAlarmPlaying = isAlarmPlaying,
-                        isAccessibilityActive = baridiMobDetector.isAccessibilityServiceEnabled(),
-                        hasUsagePermission = baridiMobDetector.hasUsageStatsPermission(),
-                        hasSmsPermission = hasSmsPermission,
-                        isDeviceAdminActive = isDeviceAdminActive,
-                        onRequestSmsPermission = { showSmsDisclosureDialog = true },
-                        onRequestDeviceAdmin = { showDeviceAdminDisclosureDialog = true },
-                        onOpenAppDetails = onOpenAppDetails,
-                        onOpenPrivacyPolicy = { showPrivacyDialog = true },
-                        onStartScan = {
-                            coroutineScope.launch {
-                                isScanning = true
-                                delay(1200)
-                                isScanning = false
-                                securityScore = 100
-                            }
-                        },
-                        onTriggerSiren = {
-                            if (isAlarmPlaying) {
-                                EmergencyAlarmPlayer.stopAlarm()
-                                isAlarmPlaying = false
-                            } else {
-                                isAlarmPlaying = true
-                                onPlaySiren()
-                                coroutineScope.launch {
-                                    delay(3700)
-                                    isAlarmPlaying = false
-                                }
-                            }
-                        },
-                        onStopAlarm = {
-                            EmergencyAlarmPlayer.stopAlarm()
-                            isAlarmPlaying = false
-                        },
-                        onTriggerKillSwitch = {
-                            onPlaySiren()
-                            killSwitch.triggerEmergencyNetworkIsolation(isArabic)
-                        },
-                        onTestBaridiAlarm = {
-                            if (isAlarmPlaying) {
-                                EmergencyAlarmPlayer.stopAlarm()
-                                isAlarmPlaying = false
-                            } else {
-                                isAlarmPlaying = true
-                                baridiMobDetector.triggerBaridiMobSecurityAlert(isArabic)
-                                coroutineScope.launch {
-                                    delay(3700)
-                                    isAlarmPlaying = false
-                                }
-                            }
-                        },
-                        onOpenAccessibility = { showAccessibilityDisclosureDialog = true },
-                        onLaunchBaridiMob = onLaunchBaridiMob
-                    )
-                    1 -> OtpVaultTab(
-                        isArabic = isArabic,
-                        hasSmsPermission = hasSmsPermission,
-                        onRequestSmsPermission = { showSmsDisclosureDialog = true }
-                    )
-                    2 -> PhishingScannerTab(isArabic, phishingScanner)
-                    3 -> ForensicsTab(
-                        isArabic = isArabic,
-                        onGenerateReport = {
-                            val sampleDossier = forensics.generateOfficialPoliceDossier(
-                                ForensicReportGenerator.IncidentData(
-                                    victimName = if (isArabic) "مواطن متضرر (ضحية قرصنة)" else "Victime de cybercriminalité",
-                                    victimPhone = "06XX-XX-XX-XX",
-                                    ccpOrRipNumber = "00799999000123456789",
-                                    maliciousAppName = "CinemaFlix Pro HD (APK)",
-                                    maliciousPackage = "com.cinemaflix.stream.hd",
-                                    maliciousSha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-                                    estimatedLossDzd = "500,000",
-                                    interceptedRipDestination = "00799999000987654321"
+            }
+        ) {
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        navigationIcon = {
+                            // Menu Hamburger ☰
+                            IconButton(onClick = { coroutineScope.launch { drawerState.open() } }) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.fa_bars),
+                                    contentDescription = "Menu Hamburger",
+                                    tint = EmeraldLight,
+                                    modifier = Modifier.size(21.dp)
                                 )
-                            )
-                            generatedReportText = sampleDossier
-                            showDossierDialog = true
-                        }
+                            }
+                        },
+                        title = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.ic_launcher),
+                                    contentDescription = "Logo",
+                                    modifier = Modifier
+                                        .size(34.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .border(1.2.dp, EmeraldLight, RoundedCornerShape(8.dp))
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text("BARIDIGUARD", fontWeight = FontWeight.Black, fontSize = 14.sp, color = Color.White)
+                                        Spacer(modifier = Modifier.width(5.dp))
+                                        Surface(
+                                            shape = RoundedCornerShape(4.dp),
+                                            color = EmeraldDark
+                                        ) {
+                                            Text(
+                                                "v1.0.0",
+                                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
+                                                fontSize = 8.5.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = EmeraldLight
+                                            )
+                                        }
+                                    }
+                                    Text(
+                                        text = if (isArabic) "حارس بريدي • الدرع الشامل" else "Bouclier BaridiMob • v1.0.0",
+                                        fontSize = 10.sp,
+                                        color = EmeraldLight
+                                    )
+                                }
+                            }
+                        },
+                        actions = {
+                            // Language Switcher [ 🇩🇿 AR | 🇫🇷 FR ]
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = GuardCardDark,
+                                border = androidx.compose.foundation.BorderStroke(1.dp, EmeraldLight.copy(alpha = 0.5f)),
+                                modifier = Modifier
+                                    .padding(horizontal = 4.dp)
+                                    .clickable { isArabic = !isArabic }
+                            ) {
+                                Text(
+                                    text = if (isArabic) "🇫🇷 FR" else "🇩🇿 AR",
+                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            }
+
+                            // Emergency 1530 Call
+                            IconButton(onClick = { showEmergencyDialog = true }) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.fa_triangle_exclamation),
+                                    contentDescription = "Urgence",
+                                    tint = DangerRed,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(containerColor = GuardSurfaceDark)
                     )
+                },
+                bottomBar = {
+                    NavigationBar(containerColor = GuardSurfaceDark) {
+                        NavigationBarItem(
+                            selected = selectedTab == 0,
+                            onClick = { selectedTab = 0 },
+                            icon = { 
+                                Icon(
+                                    painter = painterResource(id = R.drawable.fa_house),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp),
+                                    tint = if (selectedTab == 0) EmeraldLight else Color.Gray
+                                ) 
+                            },
+                            label = { Text(if (isArabic) "الرئيسية" else "Accueil", fontSize = 10.sp) }
+                        )
+                        NavigationBarItem(
+                            selected = selectedTab == 1,
+                            onClick = { selectedTab = 1 },
+                            icon = { 
+                                Icon(
+                                    painter = painterResource(id = R.drawable.fa_envelope),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp),
+                                    tint = if (selectedTab == 1) EmeraldLight else Color.Gray
+                                ) 
+                            },
+                            label = { Text(if (isArabic) "خزنة OTP" else "Coffre OTP", fontSize = 10.sp) }
+                        )
+                        NavigationBarItem(
+                            selected = selectedTab == 2,
+                            onClick = { selectedTab = 2 },
+                            icon = { 
+                                Icon(
+                                    painter = painterResource(id = R.drawable.fa_credit_card),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp),
+                                    tint = if (selectedTab == 2) EmeraldLight else Color.Gray
+                                ) 
+                            },
+                            label = { Text(if (isArabic) "سجل RIP" else "Boîte RIP", fontSize = 10.sp) }
+                        )
+                        NavigationBarItem(
+                            selected = selectedTab == 3,
+                            onClick = { selectedTab = 3 },
+                            icon = { 
+                                Icon(
+                                    painter = painterResource(id = R.drawable.fa_bell),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp),
+                                    tint = if (selectedTab == 3) EmeraldLight else Color.Gray
+                                ) 
+                            },
+                            label = { Text(if (isArabic) "إنذار الخصم" else "Fausses Notifs", fontSize = 10.sp) }
+                        )
+                    }
+                },
+                containerColor = GuardBgDark
+            ) { paddingValues ->
+                Box(modifier = Modifier.padding(paddingValues)) {
+                    when (selectedTab) {
+                        0 -> DashboardTab(
+                            isArabic = isArabic,
+                            securityScore = securityScore,
+                            isScanning = isScanning,
+                            isAlarmPlaying = isAlarmPlaying,
+                            isAccessibilityActive = baridiMobDetector.isAccessibilityServiceEnabled(),
+                            hasUsagePermission = baridiMobDetector.hasUsageStatsPermission(),
+                            hasSmsPermission = hasSmsPermission,
+                            isDeviceAdminActive = isDeviceAdminActive,
+                            onRequestSmsPermission = { showSmsDisclosureDialog = true },
+                            onRequestDeviceAdmin = { showDeviceAdminDisclosureDialog = true },
+                            onOpenAppDetails = onOpenAppDetails,
+                            onOpenPrivacyPolicy = { showPrivacyDialog = true },
+                            onStartScan = {
+                                coroutineScope.launch {
+                                    isScanning = true
+                                    delay(1200)
+                                    isScanning = false
+                                    securityScore = 100
+                                }
+                            },
+                            onTriggerSiren = {
+                                if (isAlarmPlaying) {
+                                    EmergencyAlarmPlayer.stopAlarm()
+                                    isAlarmPlaying = false
+                                } else {
+                                    isAlarmPlaying = true
+                                    onPlaySiren()
+                                    coroutineScope.launch {
+                                        delay(3700)
+                                        isAlarmPlaying = false
+                                    }
+                                }
+                            },
+                            onStopAlarm = {
+                                EmergencyAlarmPlayer.stopAlarm()
+                                isAlarmPlaying = false
+                            },
+                            onTriggerKillSwitch = {
+                                onPlaySiren()
+                                killSwitch.triggerEmergencyNetworkIsolation(isArabic)
+                            },
+                            onTestBaridiAlarm = {
+                                if (isAlarmPlaying) {
+                                    EmergencyAlarmPlayer.stopAlarm()
+                                    isAlarmPlaying = false
+                                } else {
+                                    isAlarmPlaying = true
+                                    baridiMobDetector.triggerBaridiMobSecurityAlert(isArabic)
+                                    coroutineScope.launch {
+                                        delay(3700)
+                                        isAlarmPlaying = false
+                                    }
+                                }
+                            },
+                            onOpenAccessibility = { showAccessibilityDisclosureDialog = true },
+                            onLaunchBaridiMob = onLaunchBaridiMob
+                        )
+                        1 -> OtpVaultTab(
+                            isArabic = isArabic,
+                            hasSmsPermission = hasSmsPermission,
+                            onRequestSmsPermission = { showSmsDisclosureDialog = true }
+                        )
+                        2 -> RipBlackboxTab(isArabic = isArabic)
+                        3 -> FakeNotificationTab(isArabic = isArabic)
+                        4 -> PhishingScannerTab(isArabic = isArabic, scanner = phishingScanner)
+                        5 -> ForensicsTab(
+                            isArabic = isArabic,
+                            onGenerateReport = {
+                                // جلب أول حساب مشبوه مرصود إن وجد لإدراجه تلقائياً في الشكوى
+                                val firstSuspiciousRip = RipBlackboxStorage.getAllRecords(context).firstOrNull()?.ripNumber ?: "00799999000987654321"
+                                val sampleDossier = forensics.generateOfficialPoliceDossier(
+                                    ForensicReportGenerator.IncidentData(
+                                        victimName = if (isArabic) "مواطن متضرر (ضحية قرصنة)" else "Victime de cybercriminalité",
+                                        victimPhone = "06XX-XX-XX-XX",
+                                        ccpOrRipNumber = "00799999000123456789",
+                                        maliciousAppName = "تطبيق مشبوه / Application malveillante",
+                                        maliciousPackage = "com.cinemaflix.stream.hd",
+                                        maliciousSha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                                        estimatedLossDzd = "50,000",
+                                        interceptedRipDestination = firstSuspiciousRip
+                                    )
+                                )
+                                generatedReportText = sampleDossier
+                                showDossierDialog = true
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -488,9 +646,9 @@ fun MainAppScreen(
 
                         Text(
                             text = if (isArabic) {
-                                "🔒 مبدأ الخصوصية الصارم (معالجة محلية 100%):\n• لا نجمع، ولا نخزن على أي سيرفر خارجي، ولا نشارك أي بيانات شخصية أو بنكية إطلاقاً.\n• جميع عمليات الرصد وحفظ الـ OTP تجري بالكامل داخل هاتفك.\n• كود المصدر متاح علناً للمراجعة الأمنية على GitHub."
+                                "🔒 مبدأ الخصوصية الصارم (معالجة محلية 100%):\n• لا نجمع، ولا نخزن على أي سيرفر خارجي، ولا نشارك أي بيانات شخصية أو بنكية إطلاقاً.\n• جميع عمليات الرصد وحفظ الـ OTP وسجل الـ RIP تجري بالكامل داخل هاتفك فقط.\n• كود المصدر متاح علناً للمراجعة الأمنية على GitHub."
                             } else {
-                                "🔒 Principe de Zéro Collecte (100% Local):\n• Aucune donnée personnelle ou bancaire n'est collectée, stockée sur serveur ou partagée.\n• Toutes les analyses de sécurité s'exécutent strictement en local sur votre appareil.\n• Code source ouvert et auditable sur GitHub."
+                                "🔒 Principe de Zéro Collecte (100% Local):\n• Aucune donnée personnelle ou bancaire n'est collectée, stockée sur serveur ou partagée.\n• Toutes les analyses de sécurité et le registre RIP s'exécutent strictement en local.\n• Code source ouvert et auditable sur GitHub."
                             },
                             fontSize = 11.sp,
                             color = Color.White
@@ -545,11 +703,11 @@ fun MainAppScreen(
                         Text(
                             text = if (isArabic) {
                                 "وفقاً لسياسات Google Play الصارمة، يُفصح تطبيق BaridiGuard بشكل صريح عما يلي:\n\n" +
-                                "1. الغاية الأمنية الوحيدة:\nيستخدم BaridiGuard واجهة برمجة تطبيقات AccessibilityService حصراً لكشف تشغيل تطبيق الدفع الرسمي (ru.bpc.mobilebank.bpc) وإطلاق صفارة إنذار، ولحظر النوافذ الخبيثة والشاشات السوداء المزيفة ('جاري تحديث الهاتف...').\n\n" +
+                                "1. الغاية الأمنية الوحيدة:\nيستخدم BaridiGuard واجهة برمجة تطبيقات AccessibilityService حصراً لكشف تشغيل تطبيق الدفع الرسمي (ru.bpc.mobilebank.bpc) وإطلاق صفارة إنذار، ولحظر النوافذ الخبيثة والشاشات السوداء المزيفة، ورصد إشعارات الخصم المزيفة وأرقام الـ RIP المشبوهة لمنع سرقة الأموال.\n\n" +
                                 "2. أمان بياناتك:\n• لا نسجل ضغطات المفاتيح (No Keylogging).\n• لا نقرأ كلمات المرور أو الأرصدة.\n• لا نلتقط أي صورة للشاشة.\n• لا نرسل أي معلومة عبر الإنترنت إطلاقاً."
                             } else {
                                 "Conformément aux exigences de Google Play, BaridiGuard déclare expressément:\n\n" +
-                                "1. Finalité exclusive de sécurité:\nBaridiGuard utilise l'API AccessibilityService uniquement pour détecter l'ouverture de BaridiMob (ru.bpc.mobilebank.bpc) et déclencher l'alarme, ainsi que pour bloquer les écrans noirs factices des malwares.\n\n" +
+                                "1. Finalité exclusive de sécurité:\nBaridiGuard utilise l'API AccessibilityService uniquement pour détecter l'ouverture de BaridiMob, bloquer les écrans noirs factices, et intercepter les faux avis de débit et RIP suspects.\n\n" +
                                 "2. Protection absolue:\n• Aucun enregistrement de frappes (zéro keylogging).\n• Aucun mot de passe lu.\n• Aucune capture d'écran.\n• Zéro transmission sur Internet."
                             },
                             fontSize = 11.sp,
@@ -597,10 +755,10 @@ fun MainAppScreen(
                 text = {
                     Text(
                         text = if (isArabic) {
-                            "يطلب BaridiGuard إذن قراءة الرسائل (RECEIVE_SMS) فقط لحفظ نسخة مشفرة ومستقلة من كود التأكيد (OTP) الوارد من بريد الجزائر، لحمايته من الحذف الخفي الذي يقوم به التروجان المصرفي فور سرقة الأموال.\n\n" +
+                            "يطلب BaridiGuard إذن قراءة الرسائل (RECEIVE_SMS) فقط لحفظ نسخة مشفرة ومستقلة من كود التأكيد (OTP) ورقم الـ RIP المستلم الوارد من بريد الجزائر، لحمايته من الحذف الخفي الذي يقوم به التروجان المصرفي فور سرقة الأموال.\n\n" +
                             "• لا يتم إرسال نصوص الرسائل لأي خادم.\n• يمكنك مراجعة ومسح الخزنة في أي وقت."
                         } else {
-                            "BaridiGuard demande l'accès SMS (RECEIVE_SMS) exclusivement pour sauvegarder une copie locale sécurisée du code OTP d'Algérie Poste afin d'empêcher les trojans de le supprimer furtivement.\n\n" +
+                            "BaridiGuard demande l'accès SMS (RECEIVE_SMS) exclusivement pour sauvegarder une copie locale sécurisée du code OTP et du RIP destinataire afin d'empêcher les trojans de les supprimer furtivement.\n\n" +
                             "• Aucun SMS n'est transmis hors du téléphone.\n• Données sous contrôle exclusif de l'utilisateur."
                         },
                         fontSize = 11.5.sp,
@@ -1344,7 +1502,6 @@ fun OtpVaultTab(
                 )
             }
 
-            // زر تحديث القائمة
             IconButton(onClick = { otpList = OtpVaultStorage.getAllOtps(context) }) {
                 Icon(
                     painter = painterResource(id = R.drawable.fa_envelope),
@@ -1357,7 +1514,6 @@ fun OtpVaultTab(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // تنبيه في حال عدم منح إذن الرسائل
         if (!hasSmsPermission) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -1398,7 +1554,6 @@ fun OtpVaultTab(
             Spacer(modifier = Modifier.height(10.dp))
         }
 
-        // زر تجربة محاكاة رسالة تأكيد وهمية للاختبار الفوري
         OutlinedButton(
             onClick = {
                 OtpVaultStorage.saveOtp(
@@ -1508,7 +1663,6 @@ fun OtpVaultTab(
                                 )
                             }
 
-                            // عرض كود التأكيد بحجم كبير جداً مع زر النسخ
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -1552,9 +1706,479 @@ fun OtpVaultTab(
                                 }
                             }
 
-                            // نص الرسالة الأصلي الكامل
                             Text(
                                 text = record.fullBody,
+                                fontSize = 10.5.sp,
+                                color = Color.White,
+                                lineHeight = 14.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// 💳 الصندوق الأسود: سجل حسابات الـ RIP والتحويلات المشبوهة
+// ══════════════════════════════════════════════════════════════════════════
+@Composable
+fun RipBlackboxTab(isArabic: Boolean) {
+    val context = LocalContext.current
+    var ripList by remember { mutableStateOf(RipBlackboxStorage.getAllRecords(context)) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = if (isArabic) "الصندوق الأسود: سجل حسابات RIP" else "Boîte Noire des RIP Suspects",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = Color.White
+                )
+                Text(
+                    text = if (isArabic) {
+                        "توثيق دائم لحسابات الهاكر لتجميدها لدى 1530 وإسقاطهم قضائياً"
+                    } else {
+                        "Registre immuable des comptes destinataires pour gel 1530 et plainte pénale"
+                    },
+                    fontSize = 10.5.sp,
+                    color = Color.Gray
+                )
+            }
+
+            IconButton(onClick = { ripList = RipBlackboxStorage.getAllRecords(context) }) {
+                Icon(
+                    painter = painterResource(id = R.drawable.fa_credit_card),
+                    contentDescription = "Refresh",
+                    tint = GoldLight,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // بطاقة تنبيه وشرح لميزة الصندوق الأسود
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = GuardCardDark),
+            border = androidx.compose.foundation.BorderStroke(1.dp, GoldAccent),
+            shape = RoundedCornerShape(10.dp)
+        ) {
+            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = if (isArabic) "🔒 كيف يحميك هذا السجل من إفلات الهاكر؟" else "🔒 Utilité juridique du registre RIP :",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.5.sp,
+                    color = GoldLight
+                )
+                Text(
+                    text = if (isArabic) {
+                        "حتى لو نجح الفيروس في تحويل الأموال وحذف الرسائل من هاتفك، فإن BaridiGuard يلتقط رقم الـ RIP (المكون من 20 رقماً) ويوثقه في هذه المساحة المحصنة. يمكنك نسخ الرقم فوراً للاتصال بـ 1530 لتجميد حساب المستفيد أو تقديمه للدرك الوطني."
+                    } else {
+                        "Même si le malware supprime les SMS, BaridiGuard capture le numéro RIP du destinataire (20 chiffres) et le verrouille ici pour permettre le gel immédiat via 1530 et poursuite pénale."
+                    },
+                    fontSize = 9.5.sp,
+                    color = Color.LightGray,
+                    lineHeight = 13.sp
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // زر تجربة محاكاة رصد رقم RIP مشبوه
+        OutlinedButton(
+            onClick = {
+                val fakeRip = "00799999000" + (100000000..999999999).random().toString()
+                RipBlackboxStorage.recordSuspiciousRip(
+                    context = context,
+                    ripNumber = fakeRip,
+                    amountDzd = "50,000 DZD",
+                    source = "شاشة بريدي موب الحقيقية (Capture Écran)"
+                )
+                ripList = RipBlackboxStorage.getAllRecords(context)
+                Toast.makeText(context, if (isArabic) "تم توثيق حساب RIP مشبوه في الصندوق الأسود ✓" else "RIP suspect enregistré ✓", Toast.LENGTH_SHORT).show()
+            },
+            modifier = Modifier.fillMaxWidth().height(38.dp),
+            border = androidx.compose.foundation.BorderStroke(1.dp, GoldLight),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    painter = painterResource(id = R.drawable.fa_credit_card),
+                    contentDescription = null,
+                    tint = GoldLight,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = if (isArabic) "🧪 تجربة محاكاة رصد وتوثيق حساب RIP" else "🧪 Simuler la capture d'un RIP suspect",
+                    fontSize = 10.5.sp,
+                    color = GoldLight,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        if (ripList.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.fa_lock),
+                        contentDescription = null,
+                        tint = Color.Gray,
+                        modifier = Modifier.size(42.dp)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = if (isArabic) "السجل نظيف (لا توجد تحويلات مشبوهة)" else "Aucune transaction suspecte enregistrée",
+                        fontWeight = FontWeight.Bold,
+                        color = Color.LightGray,
+                        fontSize = 13.sp
+                    )
+                    Text(
+                        text = if (isArabic) {
+                            "بمجرد ظهور أي رقم RIP في بريدي موب أو رسائل التأكيد، سيتم توثيقه هنا تلقائياً ليكون دليلك القاطع لاسترجاع أموالك."
+                        } else {
+                            "Tout numéro RIP apparaissant dans BaridiMob ou les SMS sera capturé ici automatiquement."
+                        },
+                        color = Color.Gray,
+                        fontSize = 10.sp,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
+            }
+        } else {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                items(ripList) { record ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = GuardCardDark),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, DangerRed.copy(alpha = 0.8f)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = DangerBg,
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, DangerRed)
+                                ) {
+                                    Text(
+                                        text = if (isArabic) "🚨 حساب مستفيد مرصود" else "🚨 Compte Suspect Détecté",
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = DangerRed
+                                    )
+                                }
+
+                                Text(
+                                    text = record.timestamp,
+                                    fontSize = 9.5.sp,
+                                    color = Color.Gray
+                                )
+                            }
+
+                            // عرض رقم الـ RIP الضخم مع المبلغ
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(GuardSurfaceDark, RoundedCornerShape(8.dp))
+                                    .padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = if (isArabic) "رقم الحساب المستلم (RIP - 20 Chiffres):" else "Numéro RIP Destinataire (20 chiffres) :",
+                                    fontSize = 10.sp,
+                                    color = Color.LightGray
+                                )
+                                Text(
+                                    text = record.ripNumber,
+                                    fontSize = 17.sp,
+                                    fontWeight = FontWeight.Black,
+                                    fontFamily = FontFamily.Monospace,
+                                    color = GoldLight,
+                                    letterSpacing = 1.sp
+                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = if (isArabic) "المبلغ المرصود: ${record.amountDzd}" else "Montant: ${record.amountDzd}",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                    Text(
+                                        text = record.source,
+                                        fontSize = 9.5.sp,
+                                        color = EmeraldLight
+                                    )
+                                }
+                            }
+
+                            // أزرار الإجراء السريع: نسخ، تجميد 1530، حذف
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Button(
+                                    onClick = {
+                                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                        val clip = ClipData.newPlainText("RIP", record.ripNumber)
+                                        clipboard.setPrimaryClip(clip)
+                                        Toast.makeText(context, if (isArabic) "تم نسخ رقم الـ RIP: ${record.ripNumber}" else "RIP copié !", Toast.LENGTH_SHORT).show()
+                                    },
+                                    modifier = Modifier.weight(1f).height(36.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = GuardSurfaceDark),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, GoldLight),
+                                    shape = RoundedCornerShape(6.dp)
+                                ) {
+                                    Text(
+                                        text = if (isArabic) "نسخ الـ RIP" else "Copier",
+                                        fontSize = 10.sp,
+                                        color = GoldLight,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+
+                                Button(
+                                    onClick = {
+                                        val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:1530"))
+                                        context.startActivity(intent)
+                                    },
+                                    modifier = Modifier.weight(1.3f).height(36.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = DangerRed),
+                                    shape = RoundedCornerShape(6.dp)
+                                ) {
+                                    Text(
+                                        text = if (isArabic) "تجميد الحساب (1530)" else "Geler via 1530",
+                                        fontSize = 10.sp,
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// ⚠️ رادار كشف إشعارات الخصم المزيفة (Fake Notification Radar)
+// ══════════════════════════════════════════════════════════════════════════
+@Composable
+fun FakeNotificationTab(isArabic: Boolean) {
+    val context = LocalContext.current
+    var alertList by remember { mutableStateOf(FakeNotificationDetector.getAllAlerts(context)) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = if (isArabic) "رادار إشعارات الخصم المزيفة" else "Faux Avis de Débit BaridiMob",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = Color.White
+                )
+                Text(
+                    text = if (isArabic) {
+                        "كشف التطبيقات التي ترسل إشعارات كاذبة باسم بريدي موب لاستدراجك"
+                    } else {
+                        "Détection des applications émettant de fausses alertes pour piéger la victime"
+                    },
+                    fontSize = 10.5.sp,
+                    color = Color.Gray
+                )
+            }
+
+            IconButton(onClick = { alertList = FakeNotificationDetector.getAllAlerts(context) }) {
+                Icon(
+                    painter = painterResource(id = R.drawable.fa_triangle_exclamation),
+                    contentDescription = "Refresh",
+                    tint = DangerRed,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // بطاقة شرح طريقة الاحتيال (المستخلصة من التحليل التقني)
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = DangerBg),
+            border = androidx.compose.foundation.BorderStroke(1.dp, DangerRed),
+            shape = RoundedCornerShape(10.dp)
+        ) {
+            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = if (isArabic) "⚠️ كيف يخدعك التروجان بالإشعار المزور؟" else "⚠️ Piège du faux avis de débit :",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.5.sp,
+                    color = DangerRed
+                )
+                Text(
+                    text = if (isArabic) {
+                        "يقوم التطبيق الخبيث (مثل تطبيقات المباريات أو الأفلام) بإظهار إشعار كاذب يوهمك بأنه تم خصم 50,000 دج من بريدي موب. الهدف هو إصابتك بالهلع لتفتح بريدي موب، وهنا يستغل التروجان دخولك لتنفيذ التحويل الحقيقي في الخلفية!\n\nBaridiGuard يفضح أي تطبيق يرسل إشعاراً يحمل اسم بريدي موب وهو ليس التطبيق الرسمي."
+                    } else {
+                        "Le malware émet une fausse notification de prélèvement pour affoler l'utilisateur et le pousser à ouvrir BaridiMob. BaridiGuard intercepte et démasque immédiatement toute application usurpatrice."
+                    },
+                    fontSize = 9.5.sp,
+                    color = Color.LightGray,
+                    lineHeight = 13.sp
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // زر تجربة محاكاة رصد إشعار خصم مزيف
+        OutlinedButton(
+            onClick = {
+                FakeNotificationDetector.handleFakeNotification(
+                    context = context,
+                    pkgName = "com.cinemaflix.streaming.hd",
+                    title = "BaridiMob Notification",
+                    text = "Avis de débit: Virement de 48,000 DZD effectué avec succès de votre compte CCP."
+                )
+                alertList = FakeNotificationDetector.getAllAlerts(context)
+                Toast.makeText(context, if (isArabic) "تمت محاكاة ورصد إشعار خصم مزيف بنجاح 🚨" else "Fausse alerte simulée et bloquée !", Toast.LENGTH_SHORT).show()
+            },
+            modifier = Modifier.fillMaxWidth().height(38.dp),
+            border = androidx.compose.foundation.BorderStroke(1.dp, DangerRed),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    painter = painterResource(id = R.drawable.fa_triangle_exclamation),
+                    contentDescription = null,
+                    tint = DangerRed,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = if (isArabic) "🧪 تجربة محاكاة رصد إشعار خصم كاذب" else "🧪 Simuler un faux avis de débit",
+                    fontSize = 10.5.sp,
+                    color = DangerRed,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        if (alertList.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.fa_shield_halved),
+                        contentDescription = null,
+                        tint = EmeraldLight,
+                        modifier = Modifier.size(42.dp)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = if (isArabic) "لم يتم رصد أي إشعار مزيف حتى الآن" else "Aucun faux avis détecté",
+                        fontWeight = FontWeight.Bold,
+                        color = Color.LightGray,
+                        fontSize = 13.sp
+                    )
+                    Text(
+                        text = if (isArabic) {
+                            "الرادار يعمل في الخلفية 24/7. إذا حاول أي تطبيق تضليلك بإشعار وهمي، سيطلق BaridiGuard صفارة الإنذار ويوثقه هنا."
+                        } else {
+                            "Le radar veille en continu. Toute tentative d'usurpation déclenchera l'alarme immédiate."
+                        },
+                        color = Color.Gray,
+                        fontSize = 10.sp,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
+            }
+        } else {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                items(alertList) { alert ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = GuardCardDark),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, DangerRed),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = DangerBg
+                                ) {
+                                    Text(
+                                        text = "🚨 منتحل لبريدي موب",
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = DangerRed
+                                    )
+                                }
+                                Text(
+                                    text = alert.timestamp,
+                                    fontSize = 9.5.sp,
+                                    color = Color.Gray
+                                )
+                            }
+
+                            Text(
+                                text = "التطبيق المصدر المشبوه: ${alert.maliciousPackage}",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = GoldLight
+                            )
+
+                            Text(
+                                text = "النص المزور:\n${alert.notificationText}",
                                 fontSize = 10.5.sp,
                                 color = Color.White,
                                 lineHeight = 14.sp
@@ -1737,7 +2361,7 @@ fun ForensicsTab(isArabic: Boolean, onGenerateReport: () -> Unit) {
                     color = Color.LightGray
                 )
                 Text(
-                    text = if (isArabic) "• رقم الحساب المستلم (RIP) لتجميده" else "• N° RIP destinataire pour blocage bancaire",
+                    text = if (isArabic) "• رقم الحساب المستلم (RIP) لتجميده فوراً" else "• N° RIP destinataire pour blocage bancaire",
                     fontSize = 11.sp,
                     color = Color.LightGray
                 )
